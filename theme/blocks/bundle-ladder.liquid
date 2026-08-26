@@ -1,0 +1,327 @@
+{%- comment -%}
+  Bundle ladder — the buy-column edition.
+
+  WHY THIS EXISTS AS A BLOCK. The original lives in sections/bundle-ladder.liquid and
+  renders full width, below the whole product area. A section cannot be reordered into
+  another section's block list, so putting the ladder ABOVE the upsell app — which is a
+  block inside main > product-details — meant rebuilding it at block level. This is that
+  rebuild, not a second copy to maintain: the section version should be removed from any
+  template that uses this one, or the ladder appears twice.
+
+  WHAT CHANGED FOR THE NARROW COLUMN. Three side-by-side cards do not survive a ~480px
+  column, so each option is a single full-width row: identity on top, money on the bottom
+  line. Vertical rhythm does the comparing that horizontal adjacency used to do.
+
+  PRICES ARE READ LIVE from the product object, never typed into settings. This product
+  moved from $21.99 to $3.00 in a day; any hard-coded figure here would have been wrong
+  within hours and would have contradicted the buy button sitting directly above it.
+
+  SAVINGS ARE COMPUTED, not claimed. The "Save $X" chip only renders when the product
+  genuinely carries a compare-at price above its price, and the number is the real
+  difference. No invented urgency, no fake anchors.
+
+  ADDING DOES NOT NAVIGATE. The rows are still real forms, but bundle-ladder.js upgrades
+  them to fetch-based adds so the shopper stays on the product page with the ladder and
+  the upsell app still in front of them. Sending someone to the cart the instant they
+  take an upsell ends the browse that the upsell was supposed to extend. Set "After
+  adding" to "Open the cart drawer" to go back to the old behaviour.
+
+  OVERLAP IS ENFORCED, NOT ASSERTED. "Some overlap this bundle" is a promise about the
+  cart, and a promise the cart used to break by holding both. Each option can now name
+  the products it supersedes in "Replaces in cart"; those lines are removed on add, the
+  shopper is told which ones went, and an Undo puts the cart back. Leave the field empty
+  and nothing is ever removed — an unconfigured ladder behaves exactly as it did before.
+{%- endcomment -%}
+
+{%- liquid
+  assign accent = block.settings.accent | default: '#39FF14'
+  assign radius = block.settings.radius | default: 12
+  assign shown = 0
+-%}
+
+<script
+  type="module"
+  src="{{ 'bundle-ladder.js' | asset_url }}"
+  fetchpriority="low"
+></script>
+
+<bundle-ladder
+  data-cart-url="{{ routes.cart_url }}"
+  data-add-url="{{ routes.cart_add_url }}"
+  data-update-url="{{ routes.cart_update_url }}"
+  data-after-add="{{ block.settings.after_add | default: 'stay' }}"
+  data-adding-label="{{ block.settings.adding_label | default: 'Adding…' | escape }}"
+  data-added-label="{{ block.settings.added_label | default: 'Added ✓' | escape }}"
+  data-added-message="{{ block.settings.added_message | default: 'Added to your cart.' | escape }}"
+  data-replaced-message="{{ block.settings.replaced_message | escape }}"
+  data-undo-label="{{ block.settings.undo_label | default: 'Undo' | escape }}"
+>
+  <div
+    class="blb"
+    style="--blb-accent:{{ accent }};--blb-radius:{{ radius }}px;"
+    {{ block.shopify_attributes }}
+  >
+    {%- if block.settings.heading != blank -%}
+      <p class="blb__kicker">{{ block.settings.heading | escape }}</p>
+    {%- endif -%}
+    {%- if block.settings.subheading != blank -%}
+      <p class="blb__sub">{{ block.settings.subheading | escape }}</p>
+    {%- endif -%}
+
+    <div class="blb__list">
+      {%- for i in (1..3) -%}
+        {%- liquid
+          assign pkey = 'product_' | append: i
+          assign tkey = 'title_' | append: i
+          assign mkey = 'meta_' | append: i
+          assign nkey = 'note_' | append: i
+          assign bkey = 'badge_' | append: i
+          assign fkey = 'featured_' | append: i
+          assign ckey = 'current_' | append: i
+          assign ctakey = 'cta_' | append: i
+          assign rkey = 'replaces_' | append: i
+          assign p = block.settings[pkey]
+          assign is_current = block.settings[ckey]
+          assign featured = block.settings[fkey]
+          assign badge = block.settings[bkey]
+
+          comment
+            A comma-joined list of product ids rather than variant ids: a shopper may hold
+            any variant of a superseded product, and all of them are equally superseded.
+            The script matches on product_id and removes every line that hits.
+          endcomment
+          assign replaced_ids = ''
+          for replaced in block.settings[rkey]
+            assign replaced_ids = replaced_ids | append: replaced.id | append: ','
+          endfor
+        -%}
+
+        {%- if p != blank -%}
+          {%- assign shown = shown | plus: 1 -%}
+          {%- assign v = p.selected_or_first_available_variant -%}
+
+          <div
+            class="blb__row{% if featured %} blb__row--featured{% endif %}{% if is_current %} blb__row--current{% endif %}"
+            data-blb-row
+          >
+            {%- if badge != blank and is_current == false -%}
+              <span class="blb__badge">{{ badge | escape }}</span>
+            {%- endif -%}
+
+            <p class="blb__title">{{ block.settings[tkey] | default: p.title | escape }}</p>
+
+            {%- if block.settings[mkey] != blank -%}
+              <p class="blb__meta">{{ block.settings[mkey] | escape }}</p>
+            {%- endif -%}
+            {%- if block.settings[nkey] != blank -%}
+              <p class="blb__note">{{ block.settings[nkey] | escape }}</p>
+            {%- endif -%}
+
+            <div class="blb__foot">
+              <span class="blb__money">
+                {%- if p.compare_at_price > p.price -%}
+                  <s class="blb__was">{{ p.compare_at_price | money }}</s>
+                {%- endif -%}
+                <span class="blb__now">{{ p.price | money }}</span>
+                {%- if p.compare_at_price > p.price -%}
+                  {%- assign saved = p.compare_at_price | minus: p.price -%}
+                  <span class="blb__save">Save {{ saved | money }}</span>
+                {%- endif -%}
+              </span>
+
+              {%- if is_current -%}
+                <span class="blb__here">{{ block.settings.current_label | default: 'You are viewing this' | escape }}</span>
+              {%- elsif p.available -%}
+                {%- comment -%}
+                  A sibling form, never nested inside the buy-buttons form above — nested
+                  <form> elements are invalid and the inner one silently never submits.
+
+                  It stays a genuine form so that a shopper whose browser never runs
+                  bundle-ladder.js can still add to the cart the plain HTML way.
+                {%- endcomment -%}
+                <form
+                  method="post"
+                  action="{{ routes.cart_add_url }}"
+                  class="blb__form"
+                  data-blb-form
+                  data-product-id="{{ p.id }}"
+                  {% if replaced_ids != blank %}
+                    data-replaces="{{ replaced_ids | split: ',' | join: ',' }}"
+                  {% endif %}
+                >
+                  <input type="hidden" name="form_type" value="product">
+                  <input type="hidden" name="utf8" value="&#x2713;">
+                  <input type="hidden" name="id" value="{{ v.id }}">
+                  <input type="hidden" name="quantity" value="1">
+                  <button type="submit" class="blb__btn">
+                    {{- block.settings[ctakey] | default: 'Add' | escape -}}
+                  </button>
+                </form>
+              {%- else -%}
+                <span class="blb__here">Unavailable</span>
+              {%- endif -%}
+            </div>
+
+            {%- comment -%}
+              Filled in by the script. Announced politely so a screen reader hears that
+              something left the cart without having the reading position stolen.
+            {%- endcomment -%}
+            <p class="blb__status" data-blb-status aria-live="polite" hidden></p>
+          </div>
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+
+    {%- if shown == 0 -%}
+      <p class="blb__note">Pick at least one product for this block in the theme editor.</p>
+    {%- endif -%}
+
+    {%- if block.settings.footnote != blank -%}
+      <p class="blb__footnote">{{ block.settings.footnote | escape }}</p>
+    {%- endif -%}
+  </div>
+</bundle-ladder>
+
+{%- style -%}
+  bundle-ladder { display: block; }
+
+  .blb { margin: 18px 0 4px; color: inherit; }
+  .blb__kicker { margin: 0 0 4px; font-size: .72rem; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: var(--blb-accent); }
+  .blb__sub { margin: 0 0 12px; font-size: .88rem; line-height: 1.45; opacity: .72; }
+  .blb__list { display: grid; gap: 10px; }
+
+  .blb__row {
+    position: relative;
+    border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+    border-radius: var(--blb-radius, 12px);
+    padding: 14px 14px 12px;
+    transition: border-color .18s ease, transform .18s ease;
+  }
+  .blb__row--featured { border-color: var(--blb-accent); border-width: 2px; padding: 13px 13px 11px; }
+  /* The item they are already looking at is an anchor, not an offer: it recedes. */
+  .blb__row--current { opacity: .72; border-style: dashed; }
+
+  .blb__badge {
+    position: absolute; top: -9px; left: 12px;
+    background: var(--blb-accent); color: #0B0F0D;
+    font-size: .62rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px; white-space: nowrap;
+  }
+
+  .blb__title { margin: 2px 0 2px; font-size: .98rem; font-weight: 700; line-height: 1.25; }
+  .blb__meta { margin: 0 0 6px; font-size: .76rem; letter-spacing: .02em; opacity: .6; }
+  .blb__note { margin: 0 0 12px; font-size: .84rem; line-height: 1.45; opacity: .85; }
+
+  .blb__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .blb__money { display: inline-flex; align-items: baseline; gap: 7px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+  .blb__was { opacity: .45; font-weight: 400; text-decoration: line-through; font-size: .86rem; }
+  .blb__now { font-size: 1.12rem; font-weight: 800; }
+  .blb__save {
+    font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    border: 1px solid color-mix(in srgb, var(--blb-accent) 55%, transparent);
+    color: var(--blb-accent); border-radius: 999px; padding: 2px 7px; white-space: nowrap;
+  }
+
+  .blb__form { margin: 0; }
+  .blb__btn {
+    background: var(--blb-accent); color: #0B0F0D; border: 0; cursor: pointer;
+    font: inherit; font-weight: 800; font-size: .86rem;
+    min-height: 44px; padding: 0 20px; border-radius: 999px; line-height: 1;
+    transition: filter .18s ease;
+  }
+  .blb__btn:hover { filter: brightness(1.08); }
+  .blb__btn:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+  .blb__btn[disabled] { cursor: default; opacity: .78; }
+
+  /* The confirmation that replaces the cart page the shopper is no longer sent to. */
+  .blb__status { margin: 10px 0 0; font-size: .78rem; line-height: 1.5; opacity: .9; }
+  .blb__status[hidden] { display: none; }
+  .blb__undo {
+    background: none; border: 0; margin: 0; padding: 2px 0;
+    font: inherit; font-size: inherit; font-weight: 700;
+    color: var(--blb-accent); text-decoration: underline; text-underline-offset: 2px;
+    cursor: pointer;
+  }
+  .blb__undo:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+  .blb__here { font-size: .76rem; opacity: .65; }
+  .blb__footnote { margin: 12px 0 0; font-size: .74rem; line-height: 1.45; opacity: .55; }
+
+  @media (min-width: 900px) {
+    .blb__row { padding: 15px 16px 13px; }
+  }
+{%- endstyle -%}
+
+{% schema %}
+{
+  "name": "Bundle ladder",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Kicker", "default": "Or go further" },
+    { "type": "textarea", "id": "subheading", "label": "Subheading", "default": "Same instant download. Add more now and it arrives in the same order." },
+    { "type": "color", "id": "accent", "label": "Accent colour", "default": "#39FF14" },
+    { "type": "range", "id": "radius", "label": "Corner radius", "min": 0, "max": 24, "step": 2, "unit": "px", "default": 12 },
+    { "type": "text", "id": "current_label", "label": "Label for the current product", "default": "You are viewing this" },
+
+    { "type": "header", "content": "After adding" },
+    {
+      "type": "select",
+      "id": "after_add",
+      "label": "After adding",
+      "options": [
+        { "value": "stay", "label": "Stay on the page" },
+        { "value": "open", "label": "Open the cart drawer" }
+      ],
+      "default": "stay",
+      "info": "Staying on the page keeps the ladder and the upsells in view so a shopper can add more than one thing."
+    },
+    { "type": "text", "id": "adding_label", "label": "Button label while adding", "default": "Adding…" },
+    { "type": "text", "id": "added_label", "label": "Button label once added", "default": "Added ✓" },
+    { "type": "text", "id": "added_message", "label": "Confirmation message", "default": "Added to your cart." },
+    {
+      "type": "textarea",
+      "id": "replaced_message",
+      "label": "Message when something is removed",
+      "default": "Added. [items] came out of your cart — this covers it, so you are not paying twice.",
+      "info": "[items] is replaced with the names of the products that were removed."
+    },
+    { "type": "text", "id": "undo_label", "label": "Undo button label", "default": "Undo" },
+
+    { "type": "header", "content": "Option 1" },
+    { "type": "product", "id": "product_1", "label": "Product" },
+    { "type": "text", "id": "title_1", "label": "Title override" },
+    { "type": "text", "id": "meta_1", "label": "Meta line" },
+    { "type": "textarea", "id": "note_1", "label": "Note" },
+    { "type": "text", "id": "badge_1", "label": "Badge" },
+    { "type": "text", "id": "cta_1", "label": "Button label", "default": "Add" },
+    { "type": "product_list", "id": "replaces_1", "label": "Replaces in cart", "limit": 12, "info": "Removed from the cart when this option is added, with a notice and an Undo. Use it only where this option genuinely contains the other product." },
+    { "type": "checkbox", "id": "featured_1", "label": "Highlight this option", "default": false },
+    { "type": "checkbox", "id": "current_1", "label": "This is the product being viewed", "default": false },
+
+    { "type": "header", "content": "Option 2" },
+    { "type": "product", "id": "product_2", "label": "Product" },
+    { "type": "text", "id": "title_2", "label": "Title override" },
+    { "type": "text", "id": "meta_2", "label": "Meta line" },
+    { "type": "textarea", "id": "note_2", "label": "Note" },
+    { "type": "text", "id": "badge_2", "label": "Badge" },
+    { "type": "text", "id": "cta_2", "label": "Button label", "default": "Add" },
+    { "type": "product_list", "id": "replaces_2", "label": "Replaces in cart", "limit": 12, "info": "Removed from the cart when this option is added, with a notice and an Undo. Use it only where this option genuinely contains the other product." },
+    { "type": "checkbox", "id": "featured_2", "label": "Highlight this option", "default": false },
+    { "type": "checkbox", "id": "current_2", "label": "This is the product being viewed", "default": false },
+
+    { "type": "header", "content": "Option 3" },
+    { "type": "product", "id": "product_3", "label": "Product" },
+    { "type": "text", "id": "title_3", "label": "Title override" },
+    { "type": "text", "id": "meta_3", "label": "Meta line" },
+    { "type": "textarea", "id": "note_3", "label": "Note" },
+    { "type": "text", "id": "badge_3", "label": "Badge" },
+    { "type": "text", "id": "cta_3", "label": "Button label", "default": "Add" },
+    { "type": "product_list", "id": "replaces_3", "label": "Replaces in cart", "limit": 12, "info": "Removed from the cart when this option is added, with a notice and an Undo. Use it only where this option genuinely contains the other product." },
+    { "type": "checkbox", "id": "featured_3", "label": "Highlight this option", "default": false },
+    { "type": "checkbox", "id": "current_3", "label": "This is the product being viewed", "default": false },
+
+    { "type": "header", "content": "Footer" },
+    { "type": "textarea", "id": "footnote", "label": "Footnote", "default": "Add another workbook and 10% comes off automatically at checkout." }
+  ],
+  "presets": [{ "name": "Bundle ladder" }]
+}
+{% endschema %}
