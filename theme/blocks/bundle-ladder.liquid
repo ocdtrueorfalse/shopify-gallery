@@ -26,11 +26,17 @@
   take an upsell ends the browse that the upsell was supposed to extend. Set "After
   adding" to "Open the cart drawer" to go back to the old behaviour.
 
+  ROWS DO NOT COMPETE. Adds queue, so taking the cheat sheets and then the complete
+  bundle a second later puts both in the cart. Only rows that name each other in
+  "Replaces in cart" ever displace anything.
+
   OVERLAP IS ENFORCED, NOT ASSERTED. "Some overlap this bundle" is a promise about the
   cart, and a promise the cart used to break by holding both. Each option can now name
   the products it supersedes in "Replaces in cart"; those lines are removed on add, the
   shopper is told which ones went, and an Undo puts the cart back. Leave the field empty
   and nothing is ever removed — an unconfigured ladder behaves exactly as it did before.
+  The store-wide guard in sections/bundle-overlap.liquid covers the same ground for adds
+  that never touch this block, so this field is only for the immediate in-row treatment.
 {%- endcomment -%}
 
 {%- liquid
@@ -55,6 +61,7 @@
   data-added-message="{{ block.settings.added_message | default: 'Added to your cart.' | escape }}"
   data-replaced-message="{{ block.settings.replaced_message | escape }}"
   data-undo-label="{{ block.settings.undo_label | default: 'Undo' | escape }}"
+  data-error-message="{{ block.settings.error_message | default: 'That did not add. Try again.' | escape }}"
 >
   <div
     class="blb"
@@ -285,6 +292,7 @@
       "info": "[items] is replaced with the names of the products that were removed."
     },
     { "type": "text", "id": "undo_label", "label": "Undo button label", "default": "Undo" },
+    { "type": "text", "id": "error_message", "label": "Message if an add fails", "default": "That did not add. Try again." },
 
     { "type": "header", "content": "Option 1" },
     { "type": "product", "id": "product_1", "label": "Product" },

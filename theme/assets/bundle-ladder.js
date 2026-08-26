@@ -18,9 +18,9 @@
  *
  * PROGRESSIVE ENHANCEMENT IS THE SAFETY NET. The markup is still a real, working form.
  * If this module fails to load or its imports go missing, no submit listener is attached
- * and the browser posts the form the old way: worse UX, but a shopper can still buy. Every
- * failure path inside the click handler falls back to that same native submit, and it only
- * does so while the cart is still untouched — never after an add has already landed.
+ * and the browser posts the form the old way: worse UX, but a shopper can still buy. Once
+ * the listener is attached a failed add is reported in the row instead, because navigating
+ * to the cart at that point would throw away whatever is still queued behind it.
  */
 
 import { CartLinesUpdateEvent, StandardEvents } from '@shopify/events';
@@ -131,8 +131,30 @@ class BundleLadder extends HTMLElement {
   /** @type {AbortController | null} */
   #listeners = null;
 
-  /** Guards against a second click while a mutation is mid-flight. */
-  #busy = false;
+  /**
+   * Cart mutations run one at a time, because the reconcile step reads the cart and then
+   * writes it and overlapping runs would race each other.
+   *
+   * They QUEUE rather than drop. Adding the cheat sheets and then the complete bundle a
+   * moment later is an ordinary thing to want, and the first version of this ignored the
+   * second click outright while the first add was in flight — no error, no feedback, the
+   * shopper walks to checkout believing they bought something they did not.
+   *
+   * @type {Promise<unknown>}
+   */
+  #queue = Promise.resolve();
+
+  /**
+   * @param {() => Promise<void>} task
+   * @returns {Promise<void>} Settles with this task, not with whatever ran before it.
+   */
+  #enqueue(task) {
+    // Both arms, so one failed add does not cancel everything queued behind it.
+    const run = this.#queue.then(task, task);
+    this.#queue = run.catch(() => {});
+
+    return run;
+  }
 
   connectedCallback() {
     this.#listeners = new AbortController();
@@ -160,22 +182,29 @@ class BundleLadder extends HTMLElement {
 
     event.preventDefault();
 
-    if (this.#busy) return;
+    const button = form.querySelector('button[type="submit"]');
+    if (button instanceof HTMLButtonElement && button.disabled) return;
 
-    this.#add(form).catch((error) => {
+    // The button changes on the click, not when the queue reaches this task, so a second
+    // row clicked during a slow first add visibly registers straight away.
+    const restore = this.#showPending(button);
+
+    this.#enqueue(() => this.#add(form, button, restore)).catch((error) => {
       console.error('[bundle-ladder]', error);
 
-      // Nothing has reached the cart on this path, so handing the shopper back to the
-      // native submit is safe: worst case they end up on the cart page, which is exactly
-      // where the old behaviour put them anyway.
-      form.submit();
+      // Said here rather than by falling back to a native submit: that would navigate to
+      // the cart and throw away anything still queued behind this one.
+      this.#restoreButton(button, restore);
+      this.#setStatus(form.closest('[data-blb-row]'), this.dataset.errorMessage || 'That did not add. Try again.', {
+        undo: false,
+      });
     });
   };
 
   /** @param {Event} event */
   #onClick = (event) => {
     const button = /** @type {HTMLElement} */ (event.target)?.closest?.('[data-blb-undo]');
-    if (!button || this.#busy) return;
+    if (!button) return;
 
     event.preventDefault();
 
@@ -183,7 +212,7 @@ class BundleLadder extends HTMLElement {
     const snapshot = row && this.#undoable.get(row);
     if (!snapshot) return;
 
-    this.#undo(row, snapshot).catch((error) => {
+    this.#enqueue(() => this.#undo(row, snapshot)).catch((error) => {
       console.error('[bundle-ladder]', error);
       this.#setStatus(row, 'That did not undo cleanly. Open your cart to check it.', { undo: false });
     });
@@ -199,48 +228,42 @@ class BundleLadder extends HTMLElement {
 
   /**
    * @param {HTMLFormElement} form
+   * @param {Element | null} button
+   * @param {string} restore - The button's label, captured before it said "Adding".
    */
-  async #add(form) {
+  async #add(form, button, restore) {
     const row = form.closest('[data-blb-row]');
-    const button = form.querySelector('button[type="submit"]');
     const variantId = Number(form.querySelector('input[name="id"]')?.getAttribute('value'));
 
     if (!variantId) throw new Error('Ladder row has no variant id');
 
-    this.#busy = true;
-    const restore = this.#showPending(button);
+    const sections = cartSectionIds();
+    const sectionsPayload = sections.length
+      ? { sections: sections.join(','), sections_url: window.location.pathname }
+      : {};
 
-    try {
-      const sections = cartSectionIds();
-      const sectionsPayload = sections.length
-        ? { sections: sections.join(','), sections_url: window.location.pathname }
-        : {};
+    const added = await postJSON(`${this.#routes.add}.js`, {
+      items: [{ id: variantId, quantity: 1 }],
+      ...sectionsPayload,
+    });
 
-      const added = await postJSON(`${this.#routes.add}.js`, {
-        items: [{ id: variantId, quantity: 1 }],
-        ...sectionsPayload,
-      });
+    const { sections: freshSections, itemCount, removed } = await this.#reconcile({
+      form,
+      sections,
+      sectionsPayload,
+      addedSections: added?.sections,
+    });
 
-      const { sections: freshSections, itemCount, removed } = await this.#reconcile({
-        form,
-        sections,
-        sectionsPayload,
-        addedSections: added?.sections,
-      });
+    if (row) this.#undoable.set(row, { added: variantId, removed });
 
-      if (row) this.#undoable.set(row, { added: variantId, removed });
+    announceCartUpdate(this, {
+      action: this.dataset.afterAdd === 'open' ? 'add' : 'update',
+      sections: freshSections,
+      itemCount,
+    });
 
-      announceCartUpdate(this, {
-        action: this.dataset.afterAdd === 'open' ? 'add' : 'update',
-        sections: freshSections,
-        itemCount,
-      });
-
-      this.#showAdded(button, restore);
-      this.#setStatus(row, this.#addedMessage(removed), { undo: removed.length > 0 });
-    } finally {
-      this.#busy = false;
-    }
+    this.#showAdded(button, restore);
+    this.#setStatus(row, this.#addedMessage(removed), { undo: removed.length > 0 });
   }
 
   /**
@@ -290,46 +313,40 @@ class BundleLadder extends HTMLElement {
    * @param {{added: number, removed: {id: number, quantity: number}[]}} snapshot
    */
   async #undo(row, snapshot) {
-    this.#busy = true;
+    const sections = cartSectionIds();
+    const sectionsPayload = sections.length
+      ? { sections: sections.join(','), sections_url: window.location.pathname }
+      : {};
 
-    try {
-      const sections = cartSectionIds();
-      const sectionsPayload = sections.length
-        ? { sections: sections.join(','), sections_url: window.location.pathname }
-        : {};
-
-      if (snapshot.removed.length) {
-        await postJSON(`${this.#routes.add}.js`, {
-          items: snapshot.removed.map(({ id, quantity }) => ({ id, quantity })),
-        });
-      }
-
-      // Re-read rather than trusting the line key captured before the add: re-adding the
-      // removed items may have reshuffled the cart.
-      const cart = await getJSON(`${this.#routes.cart}.js`);
-
-      /** @type {Record<string, number>} */
-      const updates = {};
-      for (const line of cart.items || []) {
-        if (line.variant_id === snapshot.added) updates[line.key] = 0;
-      }
-
-      const updated = Object.keys(updates).length
-        ? await postJSON(`${this.#routes.update}.js`, { updates, ...sectionsPayload })
-        : cart;
-
-      this.#undoable.delete(row);
-
-      announceCartUpdate(this, {
-        action: 'update',
-        sections: sections.length ? updated.sections : undefined,
-        itemCount: updated.item_count,
+    if (snapshot.removed.length) {
+      await postJSON(`${this.#routes.add}.js`, {
+        items: snapshot.removed.map(({ id, quantity }) => ({ id, quantity })),
       });
-
-      this.#setStatus(row, 'Put back the way it was.', { undo: false });
-    } finally {
-      this.#busy = false;
     }
+
+    // Re-read rather than trusting the line key captured before the add: re-adding the
+    // removed items may have reshuffled the cart.
+    const cart = await getJSON(`${this.#routes.cart}.js`);
+
+    /** @type {Record<string, number>} */
+    const updates = {};
+    for (const line of cart.items || []) {
+      if (line.variant_id === snapshot.added) updates[line.key] = 0;
+    }
+
+    const updated = Object.keys(updates).length
+      ? await postJSON(`${this.#routes.update}.js`, { updates, ...sectionsPayload })
+      : cart;
+
+    this.#undoable.delete(row);
+
+    announceCartUpdate(this, {
+      action: 'update',
+      sections: sections.length ? updated.sections : undefined,
+      itemCount: updated.item_count,
+    });
+
+    this.#setStatus(row, 'Put back the way it was.', { undo: false });
   }
 
   /**
@@ -399,10 +416,19 @@ class BundleLadder extends HTMLElement {
     // Re-enabled rather than left dead: a ladder row is a real product and a shopper is
     // allowed to want two of it.
     setTimeout(() => {
-      if (!button.isConnected) return;
-      button.disabled = false;
-      button.textContent = label;
+      if (button.isConnected) this.#restoreButton(button, label);
     }, ADDED_LABEL_MS);
+  }
+
+  /**
+   * @param {Element | null} button
+   * @param {string} label
+   */
+  #restoreButton(button, label) {
+    if (!(button instanceof HTMLButtonElement)) return;
+
+    button.disabled = false;
+    button.textContent = label;
   }
 }
 
