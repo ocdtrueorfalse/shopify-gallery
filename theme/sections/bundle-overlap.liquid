@@ -1,0 +1,223 @@
+{%- comment -%}
+  Cart overlap guard — store-wide.
+
+  WHY THIS IS NOT PART OF THE BUNDLE LADDER. The ladder can only police the adds it
+  handles itself. A shopper who takes the Complete Library from its own page and then
+  walks to the Intrusive Thoughts Bundle and uses the main Add to cart never touches the
+  ladder, and ends up holding both — which is the same broken promise the ladder was
+  fixed to stop making, arrived at from the other direction. Upsell apps, quick-add,
+  product cards and a cart restored from a previous session are all the same hole.
+
+  So the rule lives with the cart instead of with any one button. It is rendered from
+  layout/theme.liquid on every template, it re-checks after every cart change from any
+  source, and it also checks on page load, which is what catches a cart that became
+  redundant in another tab or on a previous visit.
+
+  WHERE THE TRUTH LIVES. On the product, not in this file and not in a template: the
+  `custom.bundle_includes` metafield on a bundle lists the products that bundle contains.
+  One place to edit, and every surface — this guard, the ladder, anything added later —
+  reads the same answer. A bundle with an empty metafield is inert: nothing about the
+  cart changes until a merchant states what a bundle actually contains.
+
+  THE VERDICT IS COMPUTED IN LIQUID, not in the browser. The script below never sees the
+  metafields; it asks this section what to remove and does as it is told. That keeps the
+  rule readable in one place and means the browser cannot be talked into deleting a line
+  by anything other than the shop's own data.
+
+  MUTUAL CONTAINMENT IS REFUSED. If two products each claim to include the other, that is
+  a data-entry mistake, and honouring it would remove both and hand the shopper an empty
+  cart. Neither is touched, so the mistake shows up as "nothing happened" rather than as
+  a vanished order.
+{%- endcomment -%}
+
+{%- liquid
+  assign rows = ''
+
+  for item in cart.items
+    assign covered_by = ''
+
+    for other in cart.items
+      unless other.key == item.key
+        assign other_includes_item = false
+        for included in other.product.metafields.custom.bundle_includes.value
+          if included.id == item.product.id
+            assign other_includes_item = true
+            break
+          endif
+        endfor
+
+        assign item_includes_other = false
+        for included in item.product.metafields.custom.bundle_includes.value
+          if included.id == other.product.id
+            assign item_includes_other = true
+            break
+          endif
+        endfor
+
+        if other_includes_item
+          unless item_includes_other
+            assign covered_by = other.product.title
+            break
+          endunless
+        endif
+      endunless
+    endfor
+
+    if covered_by != blank
+      capture row
+        echo '{"key":'
+        echo item.key | json
+        echo ',"variant_id":'
+        echo item.variant_id
+        echo ',"quantity":'
+        echo item.quantity
+        echo ',"title":'
+        echo item.product.title | json
+        echo ',"covered_by":'
+        echo covered_by | json
+        echo '}'
+      endcapture
+
+      if rows != blank
+        assign rows = rows | append: ','
+      endif
+      assign rows = rows | append: row
+    endif
+  endfor
+-%}
+
+{%- comment -%}
+  `lines` lets the script refuse a verdict that would empty the cart outright — a shape
+  the rules above should never produce, and not a thing to find out about in production.
+{%- endcomment -%}
+<script type="application/json" data-blo-verdict>{"lines":{{ cart.items.size }},"remove":[{{ rows }}]}</script>
+
+{%- if section.settings.enabled -%}
+  <script
+    type="module"
+    src="{{ 'bundle-overlap.js' | asset_url }}"
+    fetchpriority="low"
+  ></script>
+
+  <bundle-overlap
+    data-section-id="{{ section.id }}"
+    data-cart-url="{{ routes.cart_url }}"
+    data-add-url="{{ routes.cart_add_url }}"
+    data-update-url="{{ routes.cart_update_url }}"
+    data-mode="{{ section.settings.mode }}"
+    data-removed-message="{{ section.settings.removed_message | escape }}"
+    data-ask-message="{{ section.settings.ask_message | escape }}"
+    data-undo-label="{{ section.settings.undo_label | escape }}"
+    data-remove-label="{{ section.settings.remove_label | escape }}"
+    {% if request.design_mode %}data-design-mode{% endif %}
+  >
+    <div class="blo" role="status" aria-live="polite" hidden data-blo-toast>
+      <p class="blo__text" data-blo-text></p>
+      <div class="blo__actions">
+        <button type="button" class="blo__action" data-blo-action hidden></button>
+        <button
+          type="button"
+          class="blo__dismiss"
+          data-blo-dismiss
+          aria-label="{{ 'actions.close' | t | default: 'Close' }}"
+        >
+          &times;
+        </button>
+      </div>
+    </div>
+  </bundle-overlap>
+
+  {%- style -%}
+    bundle-overlap { display: contents; }
+
+    /*
+      Fixed, and rendered outside .page-wrapper by theme.liquid for the reason its own
+      comment gives: a transform or filter on an ancestor would trap it.
+    */
+    .blo {
+      position: fixed;
+      z-index: 100;
+      inset-inline: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      margin-inline: auto;
+      max-width: 30rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 12px 12px 14px;
+      border-radius: 12px;
+      background: var(--color-background, #0B0F0D);
+      color: var(--color-foreground, #fff);
+      border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+      box-shadow: 0 8px 28px rgb(0 0 0 / 28%);
+      font-size: .82rem;
+      line-height: 1.45;
+    }
+    .blo[hidden] { display: none; }
+
+    .blo__text { margin: 0; flex: 1 1 auto; }
+    .blo__actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+
+    .blo__action {
+      background: none; border: 0; margin: 0; padding: 4px 2px;
+      font: inherit; font-weight: 700;
+      color: inherit; text-decoration: underline; text-underline-offset: 2px;
+      cursor: pointer; white-space: nowrap;
+    }
+    .blo__action[hidden] { display: none; }
+
+    .blo__dismiss {
+      background: none; border: 0; margin: 0; padding: 0;
+      width: 28px; height: 28px; border-radius: 999px;
+      font: inherit; font-size: 1.2rem; line-height: 1;
+      color: inherit; opacity: .6; cursor: pointer;
+    }
+    .blo__dismiss:hover { opacity: 1; }
+
+    .blo__action:focus-visible,
+    .blo__dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+    @media (min-width: 750px) {
+      .blo { inset-inline: auto 20px; bottom: 20px; margin-inline: 0; }
+    }
+  {%- endstyle -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Cart overlap guard",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Keeps the cart from holding a bundle and something that bundle already contains. List a bundle's contents in its \"Bundle includes\" metafield — with no metafield set, this does nothing."
+    },
+    { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": true },
+    {
+      "type": "select",
+      "id": "mode",
+      "label": "When the cart holds an overlap",
+      "options": [
+        { "value": "remove", "label": "Remove it, with an Undo" },
+        { "value": "ask", "label": "Ask before removing" }
+      ],
+      "default": "remove",
+      "info": "Choose \"Ask\" where a bundle only partly covers the other product, so the shopper decides whether to give it up."
+    },
+    {
+      "type": "textarea",
+      "id": "removed_message",
+      "label": "Message after removing",
+      "default": "[items] came out of your cart — [bundle] already includes it."
+    },
+    {
+      "type": "textarea",
+      "id": "ask_message",
+      "label": "Message when asking",
+      "default": "[bundle] already includes [items]. Take it out of your cart?"
+    },
+    { "type": "text", "id": "undo_label", "label": "Undo button label", "default": "Undo" },
+    { "type": "text", "id": "remove_label", "label": "Remove button label", "default": "Remove it" }
+  ],
+  "presets": [{ "name": "Cart overlap guard" }]
+}
+{% endschema %}
