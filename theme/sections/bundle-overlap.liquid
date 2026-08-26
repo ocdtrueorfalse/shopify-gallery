@@ -19,10 +19,14 @@
   reads the same answer. A bundle with an empty metafield is inert: nothing about the
   cart changes until a merchant states what a bundle actually contains.
 
-  THE VERDICT IS COMPUTED IN LIQUID, not in the browser. The script below never sees the
-  metafields; it asks this section what to remove and does as it is told. That keeps the
-  rule readable in one place and means the browser cannot be talked into deleting a line
-  by anything other than the shop's own data.
+  THIS FILE NAMES BOTH SIDES, IT DOES NOT PICK ONE. Every overlap is emitted as a pair:
+  the `contained` line and the `container` line that swallows it. Which one leaves is a
+  question about what the shopper just did, and Liquid cannot see that — the cart looks
+  identical whichever way round it was built. bundle-overlap.js diffs the cart to work
+  out which side is the new arrival and drops the other. Deciding here would have baked
+  in "the big one always wins", which is exactly the bug this replaced: a shopper who
+  already had the Library and deliberately chose the smaller bundle watched their click
+  do nothing at all.
 
   MUTUAL CONTAINMENT IS REFUSED. If two products each claim to include the other, that is
   a data-entry mistake, and honouring it would remove both and hand the shopper an empty
@@ -31,10 +35,21 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign rows = ''
+  assign pairs = ''
+  assign products = ''
 
   for item in cart.items
-    assign covered_by = ''
+    if products != blank
+      assign products = products | append: ','
+    endif
+    assign products = products | append: item.product.id
+
+    assign container_found = false
+    assign container_key = ''
+    assign container_variant = 0
+    assign container_quantity = 0
+    assign container_product = 0
+    assign container_title = ''
 
     for other in cart.items
       unless other.key == item.key
@@ -56,41 +71,60 @@
 
         if other_includes_item
           unless item_includes_other
-            assign covered_by = other.product.title
+            comment
+              Captured field by field: `other` is the loop variable, and reading it after
+              the break is not something to rely on.
+            endcomment
+            assign container_found = true
+            assign container_key = other.key
+            assign container_variant = other.variant_id
+            assign container_quantity = other.quantity
+            assign container_product = other.product.id
+            assign container_title = other.product.title
             break
           endunless
         endif
       endunless
     endfor
 
-    if covered_by != blank
-      capture row
-        echo '{"key":'
+    if container_found
+      capture pair
+        echo '{"contained":{"key":'
         echo item.key | json
         echo ',"variant_id":'
         echo item.variant_id
         echo ',"quantity":'
         echo item.quantity
+        echo ',"product_id":'
+        echo item.product.id
         echo ',"title":'
         echo item.product.title | json
-        echo ',"covered_by":'
-        echo covered_by | json
-        echo '}'
+        echo '},"container":{"key":'
+        echo container_key | json
+        echo ',"variant_id":'
+        echo container_variant
+        echo ',"quantity":'
+        echo container_quantity
+        echo ',"product_id":'
+        echo container_product
+        echo ',"title":'
+        echo container_title | json
+        echo '}}'
       endcapture
 
-      if rows != blank
-        assign rows = rows | append: ','
+      if pairs != blank
+        assign pairs = pairs | append: ','
       endif
-      assign rows = rows | append: row
+      assign pairs = pairs | append: pair
     endif
   endfor
 -%}
 
 {%- comment -%}
-  `lines` lets the script refuse a verdict that would empty the cart outright — a shape
-  the rules above should never produce, and not a thing to find out about in production.
+  `lines` lets the script refuse a verdict that would empty the cart outright, and
+  `products` is what it diffs against the previous check to spot the new arrival.
 {%- endcomment -%}
-<script type="application/json" data-blo-verdict>{"lines":{{ cart.items.size }},"remove":[{{ rows }}]}</script>
+<script type="application/json" data-blo-verdict>{"lines":{{ cart.items.size }},"products":[{{ products }}],"pairs":[{{ pairs }}]}</script>
 
 {%- if section.settings.enabled -%}
   <script
@@ -106,12 +140,21 @@
     data-update-url="{{ routes.cart_update_url }}"
     data-mode="{{ section.settings.mode }}"
     data-removed-message="{{ section.settings.removed_message | escape }}"
+    data-swapped-message="{{ section.settings.swapped_message | escape }}"
     data-ask-message="{{ section.settings.ask_message | escape }}"
     data-undo-label="{{ section.settings.undo_label | escape }}"
     data-remove-label="{{ section.settings.remove_label | escape }}"
     {% if request.design_mode %}data-design-mode{% endif %}
   >
-    <div class="blo" role="status" aria-live="polite" hidden data-blo-toast>
+    {%- comment -%}
+      `popover` puts the notice in the browser's top layer. Without it the message loses
+      a race it cannot win: adding from the main buy button opens the cart drawer, which
+      is a modal <dialog>, and a modal dialog paints above every z-index on the page. The
+      notice was rendering correctly and sitting behind the drawer, which is why removals
+      made from the buy button looked silent. `manual` keeps light-dismiss off so a stray
+      tap cannot take the Undo away with it.
+    {%- endcomment -%}
+    <div class="blo" role="status" aria-live="polite" popover="manual" hidden data-blo-toast>
       <p class="blo__text" data-blo-text></p>
       <div class="blo__actions">
         <button type="button" class="blo__action" data-blo-action hidden></button>
@@ -131,16 +174,24 @@
     bundle-overlap { display: contents; }
 
     /*
-      Fixed, and rendered outside .page-wrapper by theme.liquid for the reason its own
-      comment gives: a transform or filter on an ancestor would trap it.
+      Pinned to the top, under the header. A cart notice belongs where the cart is: the
+      bottom of the screen is where a shopper on a phone has their thumb, the sticky
+      add-to-cart bar, and the browser chrome — three things competing with a message
+      they get one chance to read.
+
+      Every UA popover default is restated: `inset`, `margin`, `border`, `padding` and
+      `background` all come pre-set on [popover] and would otherwise fight these.
     */
     .blo {
       position: fixed;
-      z-index: 100;
-      inset-inline: 12px;
-      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-      margin-inline: auto;
+      inset: auto;
+      top: calc(var(--header-height, 60px) + 12px);
+      left: 12px;
+      right: 12px;
+      width: auto;
       max-width: 30rem;
+      margin: 0 auto;
+      z-index: 2147483000;
       display: flex;
       align-items: flex-start;
       gap: 12px;
@@ -149,11 +200,13 @@
       background: var(--color-background, #0B0F0D);
       color: var(--color-foreground, #fff);
       border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
-      box-shadow: 0 8px 28px rgb(0 0 0 / 28%);
+      box-shadow: 0 10px 30px rgb(0 0 0 / 34%);
       font-size: .82rem;
       line-height: 1.45;
+      overflow: visible;
     }
     .blo[hidden] { display: none; }
+    .blo:not(:popover-open) { display: none; }
 
     .blo__text { margin: 0; flex: 1 1 auto; }
     .blo__actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
@@ -178,7 +231,7 @@
     .blo__dismiss:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 
     @media (min-width: 750px) {
-      .blo { inset-inline: auto 20px; bottom: 20px; margin-inline: 0; }
+      .blo { left: auto; right: 20px; margin-inline: 0; }
     }
   {%- endstyle -%}
 {%- endif -%}
@@ -189,7 +242,7 @@
   "settings": [
     {
       "type": "paragraph",
-      "content": "Keeps the cart from holding a bundle and something that bundle already contains. List a bundle's contents in its \"Bundle includes\" metafield — with no metafield set, this does nothing."
+      "content": "Keeps the cart from holding a bundle and something that bundle already contains. List a bundle's contents in its \"Bundle includes\" metafield — with no metafield set, this does nothing. Whichever product the shopper added last is the one that stays."
     },
     { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": true },
     {
@@ -206,8 +259,16 @@
     {
       "type": "textarea",
       "id": "removed_message",
-      "label": "Message after removing",
-      "default": "[items] came out of your cart — [bundle] already includes it."
+      "label": "Message when the smaller item is removed",
+      "default": "[items] came out of your cart — [bundle] already includes it.",
+      "info": "Shown when the shopper adds the bigger bundle. [items] is what was removed, [bundle] is what stayed."
+    },
+    {
+      "type": "textarea",
+      "id": "swapped_message",
+      "label": "Message when the bundle is removed",
+      "default": "[items] came out of your cart — it already includes [kept], which you just added.",
+      "info": "Shown when the shopper deliberately adds the smaller product instead. [items] is what was removed, [kept] is what they just added."
     },
     {
       "type": "textarea",

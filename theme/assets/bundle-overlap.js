@@ -7,13 +7,20 @@
  *
  * WHAT THIS FILE DOES NOT DECIDE. It does not know what any bundle contains. It asks
  * `sections/bundle-overlap.liquid` — which reads the `custom.bundle_includes` metafield —
- * and removes exactly the lines that section names. The rule stays readable in one Liquid
+ * and acts only on the pairs that section names. The rule stays readable in one Liquid
  * file, and nothing in the browser can talk this into deleting a line the shop's own data
  * did not flag.
  *
- * WHY IT RE-ASKS INSTEAD OF CACHING. The verdict is a function of the whole cart, so it
- * is recomputed after every cart change from any source, and again on page load, which is
- * what catches a cart that went redundant in another tab.
+ * WHAT THIS FILE DOES DECIDE: which half of an overlapping pair leaves. The answer is
+ * always "whichever one the shopper did not just add". Liquid cannot work that out — a
+ * cart holding both products looks identical no matter which order it was built in — so
+ * the cart's product list is diffed against the previous check to find the new arrival.
+ *
+ * That direction matters more than it sounds. The first version always dropped the
+ * contained item, which meant a shopper already holding the Complete Library who
+ * deliberately chose the smaller Intrusive Thoughts Bundle watched their click do
+ * nothing: the bundle was added and removed again before the page repainted, and the
+ * cart looked frozen. Now the deliberate choice wins and the Library steps aside.
  *
  * TAKING NO FOR AN ANSWER. A shopper who undoes a removal, or dismisses the question,
  * means it. Those products are remembered for the session and never raised again —
@@ -33,30 +40,47 @@ const TOAST_MS = 10000;
 /** Session-scoped record of overlaps the shopper has already refused. */
 const KEPT_STORAGE_KEY = 'bundle-overlap:kept';
 
+/** The cart as of the last check, used to spot what has arrived since. */
+const CART_STORAGE_KEY = 'bundle-overlap:cart';
+
 /**
- * @returns {Set<string>} Variant ids the shopper insisted on keeping this session.
+ * @param {string} key
+ * @returns {any} null when nothing is stored, which is different from an empty list:
+ *   "no previous cart" must not be read as "every line is brand new".
  */
-function keptVariants() {
+function readStore(key) {
   try {
-    return new Set(JSON.parse(sessionStorage.getItem(KEPT_STORAGE_KEY) || '[]'));
+    const raw = sessionStorage.getItem(key);
+    return raw === null ? null : JSON.parse(raw);
   } catch (_) {
     // Private browsing and blocked storage both land here. Forgetting is survivable;
     // throwing on a cart page is not.
-    return new Set();
+    return null;
   }
 }
 
 /**
- * @param {(string | number)[]} variantIds
+ * @param {string} key
+ * @param {any} value
  */
-function rememberKept(variantIds) {
+function writeStore(key, value) {
   try {
-    const kept = keptVariants();
-    for (const id of variantIds) kept.add(String(id));
-    sessionStorage.setItem(KEPT_STORAGE_KEY, JSON.stringify([...kept]));
+    sessionStorage.setItem(key, JSON.stringify(value));
   } catch (_) {
-    // See keptVariants.
+    // See readStore.
   }
+}
+
+/** @returns {Set<string>} Variant ids the shopper insisted on keeping this session. */
+function keptVariants() {
+  return new Set(readStore(KEPT_STORAGE_KEY) ?? []);
+}
+
+/** @param {(string | number)[]} variantIds */
+function rememberKept(variantIds) {
+  const kept = keptVariants();
+  for (const id of variantIds) kept.add(String(id));
+  writeStore(KEPT_STORAGE_KEY, [...kept]);
 }
 
 /** @returns {string[]} */
@@ -96,7 +120,7 @@ async function postJSON(url, body) {
  * must not be the thing that throws the cart drawer open over the page.
  *
  * @param {Element} target
- * @param {{sections: Record<string, string> | undefined, itemCount: number}} options
+ * @param {{sections: Record<string, string> | undefined, itemCount: number | undefined}} options
  */
 function announceCartUpdate(target, { sections, itemCount }) {
   const resolved = {
@@ -126,9 +150,22 @@ function announceCartUpdate(target, { sections, itemCount }) {
  * @property {string} key
  * @property {number} variant_id
  * @property {number} quantity
+ * @property {number} product_id
  * @property {string} title
- * @property {string} covered_by
+ *
+ * @typedef {object} OverlapPair
+ * @property {OverlapLine} contained
+ * @property {OverlapLine} container
+ *
+ * @typedef {object} Verdict
+ * @property {number} lines
+ * @property {(string | number)[]} products
+ * @property {OverlapPair[]} pairs
+ *
+ * @typedef {OverlapLine & {survivor: OverlapLine, swapped: boolean}} Removal
  */
+
+const EMPTY_VERDICT = '{"lines":0,"products":[],"pairs":[]}';
 
 class BundleOverlap extends HTMLElement {
   /** @type {AbortController | null} */
@@ -141,7 +178,7 @@ class BundleOverlap extends HTMLElement {
   #checking = false;
   #stale = false;
 
-  /** @type {OverlapLine[]} */
+  /** @type {Removal[]} */
   #offered = [];
 
   connectedCallback() {
@@ -173,14 +210,14 @@ class BundleOverlap extends HTMLElement {
     return this.dataset.mode === 'ask';
   }
 
-  /** @returns {{lines: number, remove: OverlapLine[]}} */
+  /** @returns {Verdict} */
   #inlineVerdict() {
     const node = document.querySelector('[data-blo-verdict]');
 
     try {
-      return JSON.parse(node?.textContent || '{"lines":0,"remove":[]}');
+      return JSON.parse(node?.textContent || EMPTY_VERDICT);
     } catch (_) {
-      return { lines: 0, remove: [] };
+      return { lines: 0, products: [], pairs: [] };
     }
   }
 
@@ -197,8 +234,8 @@ class BundleOverlap extends HTMLElement {
 
   /**
    * @param {URL} url
-   * @returns {Promise<{lines: number, remove: OverlapLine[]} | null>} null when the
-   *   response carried no verdict, which is the caller's signal to try another URL.
+   * @returns {Promise<Verdict | null>} null when the response carried no verdict, which
+   *   is the caller's signal to try another URL.
    */
   async #verdictFrom(url) {
     const response = await fetch(url, { headers: { Accept: 'text/html' }, credentials: 'same-origin' });
@@ -227,7 +264,7 @@ class BundleOverlap extends HTMLElement {
       const sectionUrl = new URL(window.location.pathname, window.location.origin);
       sectionUrl.searchParams.set('section_id', this.dataset.sectionId || 'bundle-overlap');
 
-      /** @type {{lines: number, remove: OverlapLine[]} | null} */
+      /** @type {Verdict | null} */
       let verdict = null;
 
       try {
@@ -253,14 +290,46 @@ class BundleOverlap extends HTMLElement {
   }
 
   /**
-   * @param {{lines: number, remove: OverlapLine[]}} verdict
+   * Works out which half of each overlapping pair has to go, then does it.
+   *
+   * @param {Verdict} verdict
    */
   async #act(verdict) {
     if (this.hasAttribute('data-design-mode')) return;
 
-    const kept = keptVariants();
-    const lines = (verdict.remove || []).filter((line) => !kept.has(String(line.variant_id)));
+    const products = (verdict.products || []).map(String);
+    const previous = /** @type {string[] | null} */ (readStore(CART_STORAGE_KEY));
+    writeStore(CART_STORAGE_KEY, products);
 
+    const pairs = verdict.pairs || [];
+    if (!pairs.length) return;
+
+    // With no previous snapshot there is no "just added" — this is a cart that was
+    // already redundant when the page loaded, so the bundle keeps its place.
+    const justAdded = new Set(previous ? products.filter((id) => !previous.includes(id)) : []);
+    const kept = keptVariants();
+
+    /** @type {Map<string, Removal>} */
+    const removals = new Map();
+
+    for (const pair of pairs) {
+      const { contained, container } = pair || {};
+      if (!contained?.key || !container?.key) continue;
+
+      // The shopper's most recent deliberate choice is the one that survives. If both
+      // arrived together there is no choice to honour, and the bundle wins.
+      const choseContained =
+        justAdded.has(String(contained.product_id)) && !justAdded.has(String(container.product_id));
+
+      const victim = choseContained ? container : contained;
+      const survivor = choseContained ? contained : container;
+
+      if (kept.has(String(victim.variant_id))) continue;
+
+      removals.set(victim.key, { ...victim, survivor, swapped: choseContained });
+    }
+
+    const lines = [...removals.values()];
     if (!lines.length) return;
 
     // A verdict that clears the cart is a data error upstream, not an instruction.
@@ -281,9 +350,7 @@ class BundleOverlap extends HTMLElement {
     await this.#remove(lines);
   }
 
-  /**
-   * @param {OverlapLine[]} lines
-   */
+  /** @param {Removal[]} lines */
   async #remove(lines) {
     const sections = cartSectionIds();
     const sectionsPayload = sections.length
@@ -295,6 +362,10 @@ class BundleOverlap extends HTMLElement {
     for (const line of lines) updates[line.key] = 0;
 
     const updated = await postJSON(`${this.#routes.update}.js`, { updates, ...sectionsPayload });
+
+    if (Array.isArray(updated.items)) {
+      writeStore(CART_STORAGE_KEY, updated.items.map((/** @type {any} */ i) => String(i.product_id)));
+    }
 
     this.#applying = true;
     announceCartUpdate(this, {
@@ -308,7 +379,11 @@ class BundleOverlap extends HTMLElement {
     }, 0);
 
     this.#offered = lines;
-    this.#showToast(this.#message(this.dataset.removedMessage, lines), {
+
+    const swapped = lines.some((line) => line.swapped);
+    const template = swapped ? this.dataset.swappedMessage : this.dataset.removedMessage;
+
+    this.#showToast(this.#message(template, lines), {
       action: this.dataset.undoLabel || 'Undo',
       sticky: false,
     });
@@ -377,7 +452,7 @@ class BundleOverlap extends HTMLElement {
 
   /**
    * @param {string | undefined} template
-   * @param {OverlapLine[]} lines
+   * @param {Removal[]} lines
    * @returns {string}
    */
   #message(template, lines) {
@@ -385,9 +460,14 @@ class BundleOverlap extends HTMLElement {
     const list =
       titles.length === 1 ? titles[0] : `${titles.slice(0, -1).join(', ')} and ${titles[titles.length - 1]}`;
 
+    // Real carts hold one overlap at a time; if several ever collide, the survivor named
+    // is the first one's, and every removed title is still listed.
+    const survivor = lines[0]?.survivor?.title || 'a bundle in your cart';
+
     return (template || '[items] came out of your cart — [bundle] already includes it.')
       .replace('[items]', list)
-      .replace('[bundle]', lines[0]?.covered_by || 'a bundle in your cart');
+      .replace('[bundle]', survivor)
+      .replace('[kept]', survivor);
   }
 
   /** @type {ReturnType<typeof setTimeout> | undefined} */
@@ -412,6 +492,13 @@ class BundleOverlap extends HTMLElement {
     }
 
     toast.hidden = false;
+    // Top layer, so an open cart drawer — a modal <dialog> — cannot paint over it.
+    // Throws if it is somehow already open, which is not worth losing the toast over.
+    try {
+      /** @type {any} */ (toast).showPopover?.();
+    } catch (_) {
+      // Already showing; nothing to do.
+    }
 
     clearTimeout(this.#toastTimer);
     if (!sticky) this.#toastTimer = setTimeout(() => this.#hideToast(), TOAST_MS);
@@ -419,7 +506,16 @@ class BundleOverlap extends HTMLElement {
 
   #hideToast() {
     const toast = this.querySelector('[data-blo-toast]');
-    if (toast instanceof HTMLElement) toast.hidden = true;
+
+    if (toast instanceof HTMLElement) {
+      try {
+        /** @type {any} */ (toast).hidePopover?.();
+      } catch (_) {
+        // Already hidden.
+      }
+      toast.hidden = true;
+    }
+
     clearTimeout(this.#toastTimer);
   }
 }
