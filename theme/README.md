@@ -24,3 +24,8 @@ The overlap rules are data, not code. A bundle product lists what it contains in
 "Bundle includes" metafield (`custom.bundle_includes`, a product list), and both the
 guard and the ladder read that one answer. A product with an empty metafield is inert —
 nothing is ever removed from a cart until someone states what a bundle actually contains.
+
+The sentence that describes this to a shopper is separate from the rule that enforces it:
+it lives in the theme editor, on the ladder's Option 3 note. If what a bundle contains ever
+changes, the metafield and that sentence have to move together — a promise the cart no
+longer keeps is the bug this whole thing was built to remove.
