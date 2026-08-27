@@ -30,6 +30,16 @@
   as "this is what it is worth", not "this is a bargain". The reason is what makes a large
   discount believable, which is why this block would rather show no percentage than no
   reason.
+
+  THE GLOW IS LIT, NOT FLASHING. It does not pulse, fade in, or breathe. A highlight that
+  moves keeps reclaiming the eye, which is the countdown trick in a nicer outfit, and this
+  shop sells to people for whom that is the symptom. A static glow says "read this" once
+  and then holds still. It also costs nothing: no animation frame, no repaint, no script.
+
+  YELLOW BECAUSE IT IS NOT THE BUTTON. The accent green is what the customer clicks; if
+  the one sentence asking to be read wore it too, the page would have two greens competing
+  and only one of them would do anything. The yellow is the palette's own foreground hue
+  at full saturation, so it belongs to the site without ever being mistaken for a control.
 {%- endcomment -%}
 
 {%- liquid
@@ -61,9 +71,16 @@
     assign saved = was | minus: price
     assign percent = saved | times: 100.0 | divided_by: was | round
     assign accent = block.settings.accent | default: '#39FF14'
+    assign glow = block.settings.glow_color | default: '#FFCF3D'
+    assign glow_near = glow | color_modify: 'alpha', 0.32
+    assign glow_far = glow | color_modify: 'alpha', 0.15
   -%}
 
-  <div class="pdr" style="--pdr-accent:{{ accent }};" {{ block.shopify_attributes }}>
+  <div
+    class="pdr"
+    style="--pdr-accent:{{ accent }};--pdr-glow:{{ glow }};--pdr-glow-near:{{ glow_near }};--pdr-glow-far:{{ glow_far }};"
+    {{ block.shopify_attributes }}
+  >
     <p class="pdr__row">
       {%- if block.settings.show_percent -%}
         <span class="pdr__pill">{{ percent }}% off</span>
@@ -72,7 +89,9 @@
     </p>
 
     {%- if block.settings.reason != blank -%}
-      <p class="pdr__reason">{{ block.settings.reason | escape }}</p>
+      <p class="pdr__reason{% if block.settings.reason_glow %} pdr__reason--glow{% endif %}">
+        {{- block.settings.reason | escape -}}
+      </p>
     {%- endif -%}
 
     {%- if block.settings.ends_at != blank -%}
@@ -117,6 +136,24 @@
     }
 
     .pdr__reason { margin: 6px 0 0; font-size: .8rem; line-height: 1.45; opacity: .78; }
+
+    /* Weight 500 on purpose: the theme loads Inter 400/500/700, and a glow hung on
+       hairline text reads as blur rather than light. Full opacity for the same reason. */
+    .pdr__reason--glow {
+      opacity: 1;
+      color: var(--pdr-glow);
+      font-size: .84rem;
+      font-weight: 500;
+      text-shadow:
+        0 0 10px var(--pdr-glow-near),
+        0 0 26px var(--pdr-glow-far);
+    }
+
+    /* Anyone who has asked for more contrast wants the letterforms, not the halo. */
+    @media (prefers-contrast: more) {
+      .pdr__reason--glow { text-shadow: none; }
+    }
+
     .pdr__ends { margin: 3px 0 0; font-size: .76rem; line-height: 1.45; opacity: .6; }
   {%- endstyle -%}
 {%- endif -%}
@@ -135,6 +172,20 @@
       "label": "Why it's this price",
       "default": "We're new. The price is low while we find our first customers — it goes back up after that.",
       "info": "The only line a human writes. Keep prices OUT of it — the figures above update themselves, this sentence would not. Say why it is low and that it ends."
+    },
+    {
+      "type": "checkbox",
+      "id": "reason_glow",
+      "label": "Glow the reason line",
+      "default": true,
+      "info": "Lights the sentence so it is read instead of skimmed past. It does not blink or pulse."
+    },
+    {
+      "type": "color",
+      "id": "glow_color",
+      "label": "Glow colour",
+      "default": "#FFCF3D",
+      "info": "The site's own warm off-white at full saturation. Keep it different from the button colour — yellow marks the line as worth reading, green means clickable."
     },
     {
       "type": "text",
