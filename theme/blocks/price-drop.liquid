@@ -8,6 +8,12 @@
   compare-at was cleared — this block renders nothing at all and vanishes from the page.
   A sale badge that has to be remembered is a sale badge that eventually lies.
 
+  THE REASON LINE MUST NOT CONTAIN A PRICE. It is the one field a human writes, and the
+  temptation is to put the figures in it — "back to $29.99 soon". Do that and the whole
+  design is undone: the block keeps its numbers current automatically and that sentence
+  does not, so the day the price moves the page contradicts itself. Say why, and say that
+  it ends. Let the computed parts say how much.
+
   IT FAILS CLOSED. If an end date is set and that date has passed, the block stops
   rendering rather than quietly carrying on. The classic dark pattern is the offer that
   keeps announcing itself after it ended, or the timer that resets on refresh; the only
@@ -20,10 +26,10 @@
   is honest and does the same job; a clock counting down milliseconds is theatre aimed at
   the nervous system.
 
-  THE REASON LINE MATTERS MORE THAN THE NUMBER. An unexplained 90% off a digital product
-  reads as "this is what it is worth", not "this is a bargain" — the anchor argues
-  against you. A one-line reason is what makes a large discount believable, and it is the
-  only part of this block a human writes.
+  AN UNEXPLAINED DISCOUNT ARGUES AGAINST YOU. Ninety per cent off a digital product reads
+  as "this is what it is worth", not "this is a bargain". The reason is what makes a large
+  discount believable, which is why this block would rather show no percentage than no
+  reason.
 {%- endcomment -%}
 
 {%- liquid
@@ -127,8 +133,8 @@
       "type": "textarea",
       "id": "reason",
       "label": "Why it's this price",
-      "default": "Introductory pricing while the shop is new. The workbooks are the same ones sold at full price elsewhere.",
-      "info": "The only line a human writes. A large discount with no reason reads as what the thing is worth — say why and it reads as a deal."
+      "default": "We're new. The price is low while we find our first customers — it goes back up after that.",
+      "info": "The only line a human writes. Keep prices OUT of it — the figures above update themselves, this sentence would not. Say why it is low and that it ends."
     },
     {
       "type": "text",
