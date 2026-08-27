@@ -1,0 +1,132 @@
+{%- comment -%}
+  Read-it-first — the sample link, at the decision point.
+
+  WHY THIS EXISTS. The store has no reviews, and for this audience that matters less than
+  it looks: people with OCD are, by definition, not reassured by other people's certainty.
+  Testimony is the weakest possible proof for a reader whose whole condition is doubt
+  about whether a claim applies to them.
+
+  Demonstration is the strong form, and this shop already has it — four real pages, no
+  email, no signup. On the live page that link sat about 115KB of HTML below the Add to
+  cart button, which on a phone is several thousand pixels past the only moment it was
+  needed. This puts it directly under the button, as the answer to "how do I know this is
+  any good" at the instant the question is being asked.
+
+  IT IS A SECOND DOOR, NOT A LOUDER ONE. The button stays the primary action and keeps
+  its colour; this is quiet, bordered, secondary. Someone ready to spend $3 is not slowed
+  down by it, and someone who was about to leave gets something to do other than leave.
+
+  NO URGENCY, NO COUNTDOWN, NO "12 PEOPLE ARE VIEWING". Those are the standard conversion
+  levers and every one of them is wrong here: they work by manufacturing exactly the
+  anxious pressure this product exists to unwind, and the store's own copy already
+  refuses them. Nothing in this block expires, counts down, or claims an audience.
+{%- endcomment -%}
+
+{%- liquid
+  assign accent = block.settings.accent | default: '#39FF14'
+  assign url = block.settings.sample_url
+-%}
+
+{%- if url != blank -%}
+  <div class="smf" style="--smf-accent:{{ accent }};" {{ block.shopify_attributes }}>
+    <p class="smf__lead">{{ block.settings.lead | escape }}</p>
+
+    <a
+      class="smf__link"
+      href="{{ url }}"
+      target="_blank"
+      rel="noopener"
+    >
+      {{- block.settings.cta | escape -}}
+      <span class="smf__arrow" aria-hidden="true">→</span>
+    </a>
+
+    {%- if block.settings.note != blank -%}
+      <p class="smf__note">{{ block.settings.note | escape }}</p>
+    {%- endif -%}
+  </div>
+
+  {%- style -%}
+    .smf {
+      margin: 10px 0 2px;
+      padding: 12px 14px;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      border-radius: 12px;
+      color: inherit;
+    }
+
+    .smf__lead {
+      margin: 0;
+      font-size: .88rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    /*
+      Underline rather than a second filled button. Two solid buttons stacked is the
+      classic way to lose a primary action — whatever the shopper came to do stops
+      looking like the obvious thing to do.
+    */
+    .smf__link {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      margin-top: 6px;
+      min-height: 44px;
+      align-content: center;
+      flex-wrap: wrap;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--smf-accent);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .smf__link:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+    .smf__arrow { text-decoration: none; }
+
+    .smf__note {
+      margin: 2px 0 0;
+      font-size: .76rem;
+      line-height: 1.45;
+      opacity: .62;
+    }
+  {%- endstyle -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Read it first",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Puts the free sample directly under the Add to cart button, as the answer to \"how do I know this is any good\"."
+    },
+    {
+      "type": "url",
+      "id": "sample_url",
+      "label": "Sample file",
+      "info": "Leave empty and the block does not render."
+    },
+    {
+      "type": "text",
+      "id": "lead",
+      "label": "Lead line",
+      "default": "Not sure yet? Read it before you buy it."
+    },
+    {
+      "type": "text",
+      "id": "cta",
+      "label": "Link text",
+      "default": "Read four real pages, free"
+    },
+    {
+      "type": "text",
+      "id": "note",
+      "label": "Note",
+      "default": "Actual pages from the workbooks. No email, no signup, opens in a new tab."
+    },
+    { "type": "color", "id": "accent", "label": "Accent colour", "default": "#39FF14" }
+  ],
+  "presets": [{ "name": "Read it first" }]
+}
+{% endschema %}

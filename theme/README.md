@@ -13,6 +13,7 @@ Shopify, because the editor rewrites those files and a copy here would go stale.
 | File | Purpose |
 | --- | --- |
 | `blocks/bundle-ladder.liquid` | The bundle ladder in the product buy column. |
+| `blocks/sample-first.liquid` | The free sample, as a second door directly under Add to cart. |
 | `assets/bundle-ladder.js` | Its cart behaviour: add without navigating, and enforce overlap. |
 | `sections/bundle-overlap.liquid` | Store-wide cart overlap guard. Decides, in Liquid, which lines a bundle in the cart makes redundant. |
 | `assets/bundle-overlap.js` | Carries out that verdict and offers the shopper the Undo. |
