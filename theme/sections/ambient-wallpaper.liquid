@@ -1,0 +1,206 @@
+{%- comment -%}
+  Ambient wallpaper — a moving background that costs no bandwidth.
+
+  WHY IT IS BUILT THIS WAY. An animation is free only when it runs on the compositor,
+  which means it may change `transform` and `opacity` and nothing else. Those get handed
+  to the GPU as a cached layer. Animate `background-position`, a gradient's colour stops,
+  `box-shadow` or any geometry property instead and the browser repaints every frame on
+  the main thread — on a mid-range Android that is the difference between roughly no CPU
+  and a third of it, which shows up as jank while scrolling and a warm phone. Most of the
+  "animated gradient background" snippets on the internet animate `background-position`.
+  Those are the ones that hurt.
+
+  So: three big radial gradients, painted once, moved with `translate3d` and `scale`.
+
+  NO BLUR BY DEFAULT. A blurred solid circle looks similar but has to rasterise a very
+  large blurred layer and hold it in GPU memory. A radial gradient that fades to
+  transparent gives the same soft edge for nothing, so blur is an optional extra rather
+  than the mechanism.
+
+  IT CANNOT SLOW THE PAGE DOWN. No requests, no images, no JavaScript; the CSS rides
+  along in a stylesheet the page already loads. Being decorative and empty it can never
+  become the LCP element, and with no script there is nothing to pause when the tab is
+  hidden — the browser simply stops compositing it.
+
+  ON THE AUDIENCE. This store sells to people with OCD, intrusive thoughts and
+  hypervigilance, reading long careful copy that tells them to read each page once. A
+  restless background works against that, and for some people motion is a genuine
+  sensory trigger. Hence very slow defaults, low opacity, and an honest
+  `prefers-reduced-motion` branch that stops it dead rather than merely slowing it.
+{%- endcomment -%}
+
+{%- if section.settings.enabled -%}
+  <div class="amb" aria-hidden="true">
+    <span class="amb__blob amb__blob--a"></span>
+    <span class="amb__blob amb__blob--b"></span>
+    {%- if section.settings.color_c != blank -%}
+      <span class="amb__blob amb__blob--c"></span>
+    {%- endif -%}
+  </div>
+
+  {%- style -%}
+    .amb {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+      /* Clips the blobs and isolates their painting from the rest of the document. */
+      contain: layout paint style;
+    }
+
+    .amb__blob {
+      position: absolute;
+      display: block;
+      border-radius: 50%;
+      opacity: {{ section.settings.opacity | divided_by: 100.0 }};
+      {%- if section.settings.blur > 0 %}
+        filter: blur({{ section.settings.blur }}px);
+      {%- endif %}
+      /* Promotes each blob to its own layer so the drift never repaints the page. */
+      will-change: transform;
+    }
+
+    .amb__blob--a {
+      top: -18%;
+      left: -12%;
+      width: 62vmax;
+      height: 62vmax;
+      background: radial-gradient(circle at 50% 50%, {{ section.settings.color_a }} 0%, transparent 68%);
+      animation: amb-drift-a {{ section.settings.speed }}s ease-in-out infinite alternate;
+    }
+
+    .amb__blob--b {
+      bottom: -22%;
+      right: -14%;
+      width: 56vmax;
+      height: 56vmax;
+      background: radial-gradient(circle at 50% 50%, {{ section.settings.color_b }} 0%, transparent 68%);
+      animation: amb-drift-b {{ section.settings.speed | times: 1.4 | round }}s ease-in-out infinite alternate;
+    }
+
+    {%- if section.settings.color_c != blank %}
+      .amb__blob--c {
+        top: 28%;
+        left: 38%;
+        width: 44vmax;
+        height: 44vmax;
+        background: radial-gradient(circle at 50% 50%, {{ section.settings.color_c }} 0%, transparent 68%);
+        animation: amb-drift-c {{ section.settings.speed | times: 0.8 | round }}s ease-in-out infinite alternate;
+      }
+    {%- endif %}
+
+    @keyframes amb-drift-a {
+      from { transform: translate3d(-8%, -5%, 0) scale(1); }
+      to   { transform: translate3d(10%, 7%, 0) scale(1.18); }
+    }
+
+    @keyframes amb-drift-b {
+      from { transform: translate3d(7%, 6%, 0) scale(1.12); }
+      to   { transform: translate3d(-9%, -8%, 0) scale(1); }
+    }
+
+    @keyframes amb-drift-c {
+      from { transform: translate3d(-6%, 8%, 0) scale(1); }
+      to   { transform: translate3d(8%, -6%, 0) scale(1.25); }
+    }
+
+    {%- unless section.settings.show_on_mobile %}
+      @media screen and (max-width: 749px) {
+        .amb { display: none; }
+      }
+    {%- endunless %}
+
+    /*
+      Smaller blobs on a phone: vmax on a tall screen means the width, so a 62vmax circle
+      is roughly two viewport-heights across. Cheaper to composite and it reads the same.
+    */
+    @media screen and (max-width: 749px) {
+      .amb__blob--a, .amb__blob--b, .amb__blob--c { width: 78vw; height: 78vw; }
+    }
+
+    /* Stopped, not slowed. Anyone asking for less motion means none. */
+    @media (prefers-reduced-motion: reduce) {
+      .amb__blob {
+        animation: none;
+        transform: none;
+        will-change: auto;
+      }
+    }
+  {%- endstyle -%}
+
+  {%- if section.settings.transparent_sections -%}
+    {%- comment -%}
+      Sections paint their own background colour, and every one of them defaults to the
+      same colour as the page, so by default they sit on top of the wallpaper and hide
+      it completely. This clears them. It is a blunt instrument on purpose — the precise
+      alternative is to set the background of individual sections to none in the theme
+      editor, which is the better move once you know which sections you want it behind.
+    {%- endcomment -%}
+    {%- style -%}
+      .shopify-section,
+      .page-wrapper,
+      main.content-for-layout {
+        background-color: transparent !important;
+      }
+    {%- endstyle -%}
+  {%- endif -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Ambient wallpaper",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "A slow moving glow behind the whole site. Pure CSS — no images, no video, no scripts, and nothing extra to download."
+    },
+    { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": true },
+    { "type": "color", "id": "color_a", "label": "First colour", "default": "#39FF14" },
+    { "type": "color", "id": "color_b", "label": "Second colour", "default": "#BF00FF" },
+    { "type": "color", "id": "color_c", "label": "Third colour", "info": "Optional. Leave empty for two." },
+    {
+      "type": "range",
+      "id": "opacity",
+      "label": "Strength",
+      "min": 4,
+      "max": 60,
+      "step": 2,
+      "unit": "%",
+      "default": 22,
+      "info": "Keep it low. It is atmosphere behind text, not a feature."
+    },
+    {
+      "type": "range",
+      "id": "speed",
+      "label": "Cycle length",
+      "min": 20,
+      "max": 90,
+      "step": 5,
+      "unit": "s",
+      "default": 55,
+      "info": "Longer is calmer. Under about 30s starts to read as movement rather than atmosphere."
+    },
+    {
+      "type": "range",
+      "id": "blur",
+      "label": "Extra blur",
+      "min": 0,
+      "max": 120,
+      "step": 10,
+      "unit": "px",
+      "default": 0,
+      "info": "The gradients are already soft. Blur costs GPU memory, so leave it at 0 unless you want a specific look."
+    },
+    { "type": "checkbox", "id": "show_on_mobile", "label": "Show on mobile", "default": true },
+    {
+      "type": "checkbox",
+      "id": "transparent_sections",
+      "label": "Let it show through sections",
+      "default": false,
+      "info": "Sections paint their own background and will hide the wallpaper. Turn this on to clear them all at once. If a section is meant to be a different colour, set that one's background explicitly instead."
+    }
+  ],
+  "presets": [{ "name": "Ambient wallpaper" }]
+}
+{% endschema %}

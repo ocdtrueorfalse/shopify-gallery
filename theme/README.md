@@ -16,7 +16,8 @@ Shopify, because the editor rewrites those files and a copy here would go stale.
 | `assets/bundle-ladder.js` | Its cart behaviour: add without navigating, and enforce overlap. |
 | `sections/bundle-overlap.liquid` | Store-wide cart overlap guard. Decides, in Liquid, which lines a bundle in the cart makes redundant. |
 | `assets/bundle-overlap.js` | Carries out that verdict and offers the shopper the Undo. |
-| `layout/theme.liquid` | Only local change: renders `bundle-overlap` on every template. |
+| `sections/ambient-wallpaper.liquid` | Slow CSS-only glow behind the site. No requests, no scripts. |
+| `layout/theme.liquid` | Only local changes: renders `ambient-wallpaper` and `bundle-overlap` on every template. |
 
 ## The `custom.bundle_includes` metafield
 

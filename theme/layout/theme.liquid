@@ -56,6 +56,13 @@
 
     {% render 'chat-drawer' %}
 
+    {% comment %}
+      Rendered before the page wrapper so it reads as the backdrop. It is position:fixed
+      behind a negative z-index and contributes no height, so it changes no layout — the
+      DOM position here is for whoever reads this file, not for paint order.
+    {% endcomment %}
+    {% section 'ambient-wallpaper' %}
+
     <div class="page-wrapper">
       <div id="header-group">
         {% sections 'header-group' %}
