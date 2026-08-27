@@ -1,0 +1,144 @@
+{%- comment -%}
+  Price drop — the discount, stated once, computed from the product.
+
+  ZERO MAINTENANCE IS THE WHOLE DESIGN. Nothing here is typed: not the price, not the old
+  price, not the percentage, not the saving. Every number is read from the product at
+  render time, so putting the price back up needs no edit anywhere. The moment
+  compare-at stops being higher than price — because the price went up, or because the
+  compare-at was cleared — this block renders nothing at all and vanishes from the page.
+  A sale badge that has to be remembered is a sale badge that eventually lies.
+
+  IT FAILS CLOSED. If an end date is set and that date has passed, the block stops
+  rendering rather than quietly carrying on. The classic dark pattern is the offer that
+  keeps announcing itself after it ended, or the timer that resets on refresh; the only
+  way to be sure this never does either is to make expiry mean disappear.
+
+  WHAT IT DELIBERATELY IS NOT. No stock counter — the product is a file, there is no
+  scarcity and claiming one would be a lie. No ticking clock. This shop sells to people
+  whose condition runs on urgency and doubt, and a countdown works by manufacturing
+  exactly the pressure these workbooks exist to unwind. A real deadline stated as a date
+  is honest and does the same job; a clock counting down milliseconds is theatre aimed at
+  the nervous system.
+
+  THE REASON LINE MATTERS MORE THAN THE NUMBER. An unexplained 90% off a digital product
+  reads as "this is what it is worth", not "this is a bargain" — the anchor argues
+  against you. A one-line reason is what makes a large discount believable, and it is the
+  only part of this block a human writes.
+{%- endcomment -%}
+
+{%- liquid
+  assign product = closest.product
+  assign price = product.price
+  assign was = product.compare_at_price
+
+  assign on_sale = false
+  if was > price and price > 0
+    assign on_sale = true
+  endif
+
+  comment
+    An end date that has passed takes the whole block down with it. Compared at the end
+    of the named day, in the shop's timezone, so "ends the 30th" includes the 30th.
+  endcomment
+  assign expired = false
+  if block.settings.ends_at != blank
+    assign now_stamp = 'now' | date: '%s' | plus: 0
+    assign end_stamp = block.settings.ends_at | date: '%s' | plus: 86399
+    if now_stamp > end_stamp
+      assign expired = true
+    endif
+  endif
+-%}
+
+{%- if on_sale and expired == false -%}
+  {%- liquid
+    assign saved = was | minus: price
+    assign percent = saved | times: 100.0 | divided_by: was | round
+    assign accent = block.settings.accent | default: '#39FF14'
+  -%}
+
+  <div class="pdr" style="--pdr-accent:{{ accent }};" {{ block.shopify_attributes }}>
+    <p class="pdr__row">
+      {%- if block.settings.show_percent -%}
+        <span class="pdr__pill">{{ percent }}% off</span>
+      {%- endif -%}
+      <span class="pdr__saved">You save {{ saved | money }}</span>
+    </p>
+
+    {%- if block.settings.reason != blank -%}
+      <p class="pdr__reason">{{ block.settings.reason | escape }}</p>
+    {%- endif -%}
+
+    {%- if block.settings.ends_at != blank -%}
+      {%- comment -%}
+        Only claim a deadline when there is one. The date and the old price are both read
+        from live data, so neither can drift out of step with what is actually charged.
+      {%- endcomment -%}
+      <p class="pdr__ends">
+        Back to {{ was | money }} after {{ block.settings.ends_at | date: '%-d %B' }}.
+      </p>
+    {%- endif -%}
+  </div>
+
+  {%- style -%}
+    .pdr { margin: 2px 0 0; color: inherit; }
+
+    .pdr__row {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* The one loud element on the page, and it is loud because it is true. */
+    .pdr__pill {
+      background: var(--pdr-accent);
+      color: #0B0F0D;
+      font-size: .68rem;
+      font-weight: 800;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .pdr__saved {
+      font-size: .82rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .pdr__reason { margin: 6px 0 0; font-size: .8rem; line-height: 1.45; opacity: .78; }
+    .pdr__ends { margin: 3px 0 0; font-size: .76rem; line-height: 1.45; opacity: .6; }
+  {%- endstyle -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Price drop",
+  "settings": [
+    {
+      "type": "paragraph",
+      "content": "Reads the product's price and compare-at price. Every number is computed, so nothing here needs editing when the price changes — and the block disappears on its own the moment the product is no longer discounted."
+    },
+    {
+      "type": "textarea",
+      "id": "reason",
+      "label": "Why it's this price",
+      "default": "Introductory pricing while the shop is new. The workbooks are the same ones sold at full price elsewhere.",
+      "info": "The only line a human writes. A large discount with no reason reads as what the thing is worth — say why and it reads as a deal."
+    },
+    {
+      "type": "text",
+      "id": "ends_at",
+      "label": "Last day of the offer",
+      "info": "YYYY-MM-DD. Optional. Leave empty for no deadline. If the date passes, the whole block stops showing rather than claiming an offer that has ended."
+    },
+    { "type": "checkbox", "id": "show_percent", "label": "Show the percentage", "default": true },
+    { "type": "color", "id": "accent", "label": "Accent colour", "default": "#39FF14" }
+  ],
+  "presets": [{ "name": "Price drop" }]
+}
+{% endschema %}

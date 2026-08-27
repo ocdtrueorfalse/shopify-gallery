@@ -1,0 +1,1068 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "itb_bonus_gold": {
+      "type": "itb-bonus-gold",
+      "settings": {}
+    },
+    "main": {
+      "type": "product-information",
+      "blocks": {
+        "disclosures_g9mWze": {
+          "type": "disclosures",
+          "name": "t:names.disclosures",
+          "settings": {
+            "heading": "Disclosures",
+            "heading_preset": "h5",
+            "open_by_default": false,
+            "icon": "caret",
+            "disclosure_heading_preset": "h6",
+            "text_color": "",
+            "dividers": true,
+            "divider_color": "{{ settings.color_palette.color2 }}",
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "media-gallery": {
+          "type": "_product-media-gallery",
+          "static": true,
+          "settings": {
+            "media_presentation": "grid",
+            "media_columns": "two",
+            "image_gap": 4,
+            "large_first_image": true,
+            "icons_style": "arrow",
+            "slideshow_controls_style": "counter",
+            "slideshow_mobile_controls_style": "dots",
+            "thumbnail_position": "right",
+            "thumbnail_width": 44,
+            "thumbnail_radius": 0,
+            "aspect_ratio": "adapt",
+            "constrain_to_viewport": true,
+            "media_fit": "contain",
+            "media_radius": 4,
+            "extend_media": true,
+            "zoom": true,
+            "video_loop": false,
+            "hide_variants": true,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "product-details": {
+          "type": "_product-details",
+          "static": true,
+          "settings": {
+            "width": "fill",
+            "custom_width": 100,
+            "width_mobile": "fill",
+            "custom_width_mobile": 100,
+            "height": "fit",
+            "details_position": "flex-start",
+            "gap": 20,
+            "sticky_details_desktop": true,
+            "background_media": "none",
+            "background_color": "",
+            "video_position": "cover",
+            "background_image_position": "cover",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_color": "",
+            "border_radius": 0,
+            "padding-block-start": 16,
+            "padding-block-end": 24,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {
+            "group_icgrde": {
+              "type": "group",
+              "name": "t:names.header",
+              "settings": {
+                "content_direction": "column",
+                "vertical_on_mobile": true,
+                "horizontal_alignment": "flex-start",
+                "vertical_alignment": "center",
+                "align_baseline": false,
+                "horizontal_alignment_flex_direction_column": "flex-start",
+                "vertical_alignment_flex_direction_column": "center",
+                "gap": 8,
+                "width": "fill",
+                "custom_width": 100,
+                "width_mobile": "fill",
+                "custom_width_mobile": 100,
+                "height": "fit",
+                "custom_height": 100,
+                "background_media": "none",
+                "background_color": "",
+                "video_position": "cover",
+                "background_image_position": "cover",
+                "toggle_overlay": false,
+                "overlay_color": "#00000026",
+                "overlay_style": "solid",
+                "gradient_direction": "to top",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_color": "",
+                "border_radius": 0,
+                "link": "",
+                "open_in_new_tab": false,
+                "placeholder": "",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {
+                "text_xrnftG": {
+                  "type": "text",
+                  "name": "t:names.product_title",
+                  "settings": {
+                    "text": "<h1>{{ closest.product.title }}</h1>",
+                    "width": "100%",
+                    "max_width": "normal",
+                    "alignment": "left",
+                    "type_preset": "h3",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "wrap": "pretty",
+                    "text_color": "",
+                    "background": false,
+                    "background_color": "#00000026",
+                    "corner_radius": 0,
+                    "padding-block-start": 0,
+                    "padding-block-end": 0,
+                    "padding-inline-start": 0,
+                    "padding-inline-end": 0
+                  },
+                  "blocks": {}
+                },
+                "price_tVjtKg": {
+                  "type": "price",
+                  "settings": {
+                    "show_sale_price_first": true,
+                    "show_installments": false,
+                    "show_tax_info": false,
+                    "type_preset": "paragraph",
+                    "width": "100%",
+                    "alignment": "left",
+                    "font": "var(--font-body--family)",
+                    "font_size": "1rem",
+                    "line_height": "normal",
+                    "letter_spacing": "normal",
+                    "case": "none",
+                    "text_color": "",
+                    "padding-block-start": 2,
+                    "padding-block-end": 0,
+                    "padding-inline-start": 0,
+                    "padding-inline-end": 0
+                  },
+                  "blocks": {}
+                }
+              },
+              "block_order": [
+                "text_xrnftG",
+                "price_tVjtKg"
+              ]
+            },
+            "hook_line": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>When your mind will not let something go, start here.</strong> Printable, ERP-informed pages &mdash; print them at home or fill them in on your phone.</p>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "divider_VJhene": {
+              "type": "_divider",
+              "name": "t:names.divider",
+              "settings": {
+                "thickness": 1,
+                "corner_radius": "square",
+                "divider_color": "{{ settings.color_palette.color2 }}",
+                "width_percent": 100,
+                "padding-block-start": 0,
+                "padding-block-end": 0
+              },
+              "blocks": {}
+            },
+            "trust_line": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>Download after checkout</strong> &mdash; your files are on the order confirmation page, plus a backup link by email.<br><strong>Yours to keep</strong> &mdash; reprint whenever you like.</p>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "{{ settings.color_palette.color1 }}",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "bonus_gold": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>Free bonus</strong> &mdash; a 53-page True or False visual experience. Only available with this bundle. Not sold separately!</p>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "variant_picker_R3rGDr": {
+              "type": "variant-picker",
+              "settings": {
+                "variant_style": "buttons",
+                "show_swatches": false,
+                "option_label_text_color": "",
+                "variant_style_class": "default",
+                "custom_variant_background": "{{ settings.color_palette.background }}",
+                "custom_variant_text": "{{ settings.color_palette.foreground }}",
+                "custom_variant_border": "{{ settings.color_palette.foreground }}",
+                "selected_variant_style_class": "default",
+                "custom_selected_variant_background": "{{ settings.color_palette.foreground }}",
+                "custom_selected_variant_text": "{{ settings.color_palette.background }}",
+                "custom_selected_variant_border": "{{ settings.color_palette.foreground }}",
+                "alignment": "left",
+                "padding-block-start": 0,
+                "padding-block-end": 8,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "buy_buttons_eYQEYi": {
+              "type": "buy-buttons",
+              "settings": {
+                "stacking": true,
+                "text_color": "",
+                "show_pickup_availability": false,
+                "gift_card_form": true,
+                "recipient_button_style": "default",
+                "recipient_button_background": "{{ settings.color_palette.background }}",
+                "recipient_button_text": "{{ settings.color_palette.foreground }}",
+                "recipient_button_border": "{{ settings.color_palette.foreground }}",
+                "selected_recipient_button_style": "default",
+                "selected_recipient_button_background": "{{ settings.color_palette.foreground }}",
+                "selected_recipient_button_text": "{{ settings.color_palette.background }}",
+                "selected_recipient_button_border": "{{ settings.color_palette.foreground }}",
+                "input_style": "default",
+                "input_background_color": "{{ settings.color_palette.background }}",
+                "input_text_color": "{{ settings.color_palette.foreground }}",
+                "input_border_color": "{{ settings.color_palette.foreground }}",
+                "border_width": 1,
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {
+                "quantity": {
+                  "type": "quantity",
+                  "static": true,
+                  "settings": {
+                    "input_style": "default",
+                    "input_background_color": "{{ settings.color_palette.background }}",
+                    "input_text_color": "{{ settings.color_palette.foreground }}",
+                    "input_border_color": "{{ settings.color_palette.foreground }}",
+                    "border_width": 1,
+                    "border_radius": 0
+                  },
+                  "blocks": {}
+                },
+                "add-to-cart": {
+                  "type": "add-to-cart",
+                  "static": true,
+                  "settings": {
+                    "style_class": "button",
+                    "custom_button_background": "{{ settings.color_palette.foreground }}",
+                    "custom_button_text": "{{ settings.color_palette.background }}",
+                    "custom_button_border": "{{ settings.color_palette.background }}"
+                  },
+                  "blocks": {}
+                },
+                "accelerated-checkout": {
+                  "type": "accelerated-checkout",
+                  "static": true,
+                  "settings": {},
+                  "blocks": {}
+                }
+              },
+              "block_order": []
+            },
+            "ocd_aov_upsell_product_upsell_main": {
+              "type": "shopify://apps/ocd-aov-upsell/blocks/product-upsell/019fd8b5-c9e8-7840-9b7a-acc0931a357e",
+              "settings": {
+                "heading": "Often bought together",
+                "max_visible": 3,
+                "cta_label": "Add",
+                "button_style": "secondary"
+              }
+            },
+            "repair_promise": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>If it&rsquo;s not right, we fix it.</strong> Wrong file, missing pages, or it will not open on your device &mdash; email us within 30 days and we get you a working copy. A real person reads every message.<br><strong>Secure checkout</strong> &mdash; no shipping, no waiting, no subscription. Add another workbook and 10% comes off automatically.</p>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.8125rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "{{ settings.color_palette.color1 }}",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "selection_help": {
+              "type": "text",
+              "name": "t:names.text",
+              "settings": {
+                "text": "<p><strong>Not sure this is the right guide?</strong> You do not need to know the clinical name. Browse <a href=\"/pages/learn\">what feels most familiar</a>, or start with <a href=\"/products/the-complete-ocd-subtype-library-9-workbooks\">the Complete OCD Library</a>.</p>",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "custom",
+                "font": "var(--font-body--family)",
+                "font_size": "0.875rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "{{ settings.color_palette.color1 }}",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "text_aEtTtq": {
+              "type": "text",
+              "name": "t:names.product_description",
+              "settings": {
+                "text": "{{ closest.product.description }}",
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "bundle_ladder": {
+              "type": "bundle-ladder",
+              "settings": {
+                "heading": "Or go further",
+                "subheading": "Same instant download. Add more now and it arrives in the same order.",
+                "accent": "#39FF14",
+                "radius": 12,
+                "current_label": "You are viewing this",
+                "product_1": "the-intrusive-thoughts-bundle",
+                "title_1": "",
+                "meta_1": "3 workbooks · 268 pages",
+                "note_1": "Harm OCD, Pure-O & Rumination, and Scrupulosity. Print and fillable editions of all three.",
+                "badge_1": "",
+                "cta_1": "Add",
+                "featured_1": false,
+                "current_1": true,
+                "product_2": "the-erp-cheat-sheets",
+                "title_2": "",
+                "meta_2": "Quick-reference sheets",
+                "note_2": "For when you're mid-exposure and need the next step without hunting back through a workbook.",
+                "badge_2": "Most people add this",
+                "cta_2": "Add",
+                "featured_2": false,
+                "current_2": false,
+                "product_3": "the-complete-ocd-subtype-library-9-workbooks",
+                "title_3": "",
+                "meta_3": "9 workbooks · 796 pages",
+                "note_3": "Nine subtypes — checking, contamination, relationship doubt and more. All three workbooks in this bundle are among them, so adding it removes this bundle from your cart rather than charging you twice.",
+                "badge_3": "Best value",
+                "cta_3": "Add",
+                "featured_3": true,
+                "current_3": false,
+                "footnote": "Add another workbook and 10% comes off automatically at checkout."
+              },
+              "blocks": {}
+            },
+            "sample_first": {
+              "type": "sample-first",
+              "settings": {
+                "sample_url": "https://cdn.shopify.com/s/files/1/0999/1113/9603/files/intrusive-thoughts-sample.pdf?v=1786054330",
+                "lead": "Not sure yet? Read it before you buy it.",
+                "cta": "Read four real pages, free",
+                "note": "Actual pages from the workbooks. No email, no signup, opens in a new tab.",
+                "accent": "#39FF14"
+              },
+              "blocks": {}
+            },
+            "price_drop": {
+              "type": "price-drop",
+              "settings": {
+                "reason": "Introductory pricing while the shop is new. These are the same workbooks sold at full price elsewhere.",
+                "ends_at": "",
+                "show_percent": true,
+                "accent": "#39FF14"
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "group_icgrde",
+            "price_drop",
+            "hook_line",
+            "variant_picker_R3rGDr",
+            "buy_buttons_eYQEYi",
+            "sample_first",
+            "trust_line",
+            "bonus_gold",
+            "divider_VJhene",
+            "bundle_ladder",
+            "ocd_aov_upsell_product_upsell_main",
+            "repair_promise",
+            "selection_help",
+            "text_aEtTtq"
+          ]
+        }
+      },
+      "block_order": [
+        "disclosures_g9mWze"
+      ],
+      "settings": {
+        "content_width": "content-center-aligned",
+        "desktop_media_position": "left",
+        "equal_columns": false,
+        "limit_details_width": false,
+        "gap": 48,
+        "enable_sticky_add_to_cart": true,
+        "background_color": "{{ settings.color_palette.background }}",
+        "padding-block-start": 0,
+        "padding-block-end": 0
+      }
+    },
+    "fg_voiceover": {
+      "type": "fg-voiceover",
+      "settings": {
+        "eyebrow": "HEAR WHAT IS INSIDE",
+        "heading": "A walk through it, in under a minute",
+        "note": "Narrated. Turn your sound on, or read the page instead — everything it says is written above."
+      }
+    },
+    "fg_answers": {
+      "type": "fg-straight-answers",
+      "blocks": {
+        "sa_get": {
+          "type": "row",
+          "settings": {
+            "q": "What you actually get",
+            "a": "<p>Three workbooks — <strong>Harm OCD</strong>, <strong>Pure-O &amp; Rumination</strong>, and <strong>Scrupulosity</strong> — each supplied twice, as a print edition and a fillable edition.</p><p>Plus a cut-out sheet of <strong>8 pocket cards</strong>: one line each, no labels and no logo, so there is nothing to explain if someone sees one.</p><p><strong>268 pages</strong> in total — 137 print, 131 fillable — across 134 pages of unique material.</p>",
+            "open": true,
+            "flag": false
+          }
+        },
+        "sa_rules": {
+          "type": "row",
+          "settings": {
+            "q": "Using this without it turning into a compulsion",
+            "a": "<p>A fair worry, and one most self-help material ignores completely. Three rules for how these are meant to be used:</p><ul><li><strong>Read each page once.</strong> Re-reading it for the version that finally feels right is the compulsion wearing a study hat.</li><li><strong>Set a timer.</strong> Twenty minutes, then stop, whether or not it feels finished. Stopping while it is still unresolved is the exercise, not a failure of it.</li><li><strong>Never re-do a worksheet to get it right.</strong> There is no right. A messy first answer has already done its job.</li></ul><p>And the thing these pages will never do: tell you whether your particular fear is true. Nothing can, and anything offering to is selling relief that expires within the hour.</p>",
+            "open": false,
+            "flag": true
+          }
+        },
+        "sa_covers": {
+          "type": "row",
+          "settings": {
+            "q": "What these three cover — and what they don't",
+            "a": "<p><strong>They are for:</strong> frightening thoughts about harm you would never want; replaying and mental reviewing that happens entirely in your head, where there is no compulsion anyone can see; and guilt about faith, honesty, or whether you are a good person.</p><p><strong>They are not for:</strong> contamination, checking, symmetry and just-right, health anxiety, relationship doubt, or real-event and false-memory themes. Those are separate workbooks — <a href=\"/pages/learn\">find the one that matches</a> rather than making these fit.</p><p>Themes move around. The mechanics on these pages do not, which is why they still work when the subject changes.</p>",
+            "open": false,
+            "flag": false
+          }
+        },
+        "sa_tried": {
+          "type": "row",
+          "settings": {
+            "q": "I've tried worksheets before and nothing changed",
+            "a": "<p>Most worksheets ask you to weigh the evidence and argue the thought down. With OCD that backfires — examining the content is itself a compulsion, so the relief expires like every other kind, and the thought comes back carrying more authority than before.</p><p>Nothing in these pages asks you to disprove a thought, rate how likely it is, or gather evidence for and against it. The work is practising moving before the doubt clears.</p>",
+            "open": false,
+            "flag": false
+          }
+        },
+        "sa_after": {
+          "type": "row",
+          "settings": {
+            "q": "What happens the second you pay",
+            "a": "<p>Your files are on the order confirmation page immediately — nothing ships, nothing is posted, and there is no account to create. A backup link also goes to your email in case you close the tab.</p><p>On a phone they save to Files or Downloads like any other PDF. You can come back and download them again whenever you want.</p>",
+            "open": false,
+            "flag": false
+          }
+        },
+        "sa_print": {
+          "type": "row",
+          "settings": {
+            "q": "Can I print it, or fill it in on my phone?",
+            "a": "<p>Both. Every workbook comes twice — a print edition and a fillable edition — so you can write by hand or type, and switch whenever you like.</p><p>When printing, choose <strong>100% or Actual Size</strong> rather than Fit to Page. Scaling is the usual reason margins come out clipped.</p>",
+            "open": false,
+            "flag": false
+          }
+        },
+        "sa_therapy": {
+          "type": "row",
+          "settings": {
+            "q": "Is this therapy?",
+            "a": "<p>No. These are self-practice materials built from published ERP methods — the same approach a therapist would work through with you, on paper, at your own pace. They are meant to support working with a professional, not to replace it.</p><p>If you are in crisis right now, this is not the right tool for today. Please reach a person who can help.</p>",
+            "open": false,
+            "flag": false
+          }
+        },
+        "sa_wrong": {
+          "type": "row",
+          "settings": {
+            "q": "What if something's wrong with the file?",
+            "a": "<p>Wrong file, missing pages, or it will not open on your device — email and you will get a working copy. Within 30 days, no argument. A real person reads every message.</p>",
+            "open": false,
+            "flag": false
+          }
+        }
+      },
+      "block_order": [
+        "sa_get",
+        "sa_rules",
+        "sa_covers",
+        "sa_tried",
+        "sa_after",
+        "sa_print",
+        "sa_therapy",
+        "sa_wrong"
+      ],
+      "settings": {
+        "kicker": "Straight answers",
+        "heading": "Everything you'd want to know before spending anything",
+        "author_name": "Julian",
+        "author_line": "Not a clinician — these are self-practice materials built from published ERP methods, not treatment.",
+        "contact_email": "ocdtrueorfalse@gmail.com"
+      }
+    },
+    "fg_ocd_says": {
+      "type": "fg-ocd-says",
+      "settings": {
+        "kicker": "OCD says / Reality",
+        "heading": "Three more your mind gets backwards",
+        "pairs": "You need to be certain before you can move on. :: Certainty is the one thing OCD promises and never delivers. You can move before the doubt clears.\nChecking one more time will finally settle it. :: Every check teaches the doubt to come back louder. That is why it never stays settled.\nIf you cannot stop thinking about it, it must be important. :: Attention is not evidence. OCD grabs the loudest thought, not the truest one.",
+        "turn_head": "So why does knowing this not make it stop?",
+        "turn_body": "Because understanding a loop does not switch it off. Reassurance wears off by design — that is why the relief never lasts more than an hour, and why you end up back at the same question by evening. <strong>What changes it is practice.</strong> Small, repeatable exposures you work through on paper, one page at a time. That is what these three workbooks are.",
+        "cta_label": "Start the practice",
+        "show_price": true
+      }
+    },
+    "product_confidence": {
+      "type": "product-confidence",
+      "settings": {}
+    },
+    "fg_bundle": {
+      "type": "fg-bundle-savings",
+      "settings": {
+        "unique_pages": "134"
+      }
+    },
+    "fg_sample": {
+      "type": "fg-sample-peek",
+      "settings": {
+        "sample_pages": "four",
+        "sample_url": "https://cdn.shopify.com/s/files/1/0999/1113/9603/files/intrusive-thoughts-sample.pdf?v=1786054330"
+      }
+    },
+    "fg_pages": {
+      "type": "fg-page-stack",
+      "settings": {
+        "total_pages": "268",
+        "print_pages": "137",
+        "fill_pages": "131",
+        "unique_pages": "134"
+      }
+    },
+    "fg_printfill": {
+      "type": "fg-print-fillable",
+      "settings": {
+        "total_pages": "268",
+        "print_pages": "137",
+        "fill_pages": "131",
+        "unique_pages": "134"
+      }
+    },
+    "fg_pocket": {
+      "type": "fg-pocket-cards",
+      "settings": {}
+    },
+    "bonus_field_test_RN68n4": {
+      "type": "bonus-field-test",
+      "name": "Bonus — Field Test",
+      "settings": {
+        "eyebrow": "Included free · Not sold separately",
+        "heading": "Every order comes with Field Test 01.",
+        "body": "<p>A 53-page vertical deck built to be read on a phone. One claim per screen, one verdict per screen. Twenty-five of the most common things people believe about intrusive thoughts, sorted into true and false, each with one small thing to try.</p><p>It arrives with the bundle files. It isn't listed anywhere else in the store.</p>",
+        "instruction": "Tap a card to turn it over",
+        "c1_claim": "Almost everyone has intrusive thoughts.",
+        "c1_verdict": "TRUE",
+        "c1_reality": "Roughly nine in ten people with no diagnosis report them. The content overlaps almost entirely.",
+        "c2_claim": "Checking once settles the question.",
+        "c2_verdict": "FALSE",
+        "c2_reality": "Every check teaches the brain the question was worth asking, so it gets asked again.",
+        "c3_claim": "The point of a compulsion is certainty.",
+        "c3_verdict": "TRUE",
+        "c3_reality": "Certainty is what's being bought. The catch is that it expires, every time.",
+        "spec1_value": "53",
+        "spec1_label": "Pages",
+        "spec2_value": "25",
+        "spec2_label": "Claims tested",
+        "spec3_value": "9:16",
+        "spec3_label": "Built for a phone",
+        "spec4_value": "$0",
+        "spec4_label": "Included with the bundle",
+        "button_label": "Get the bundle + Field Test 01",
+        "fine_print": "Delivered with your download · Not sold separately",
+        "color_bg": "#050505",
+        "color_true": "#39ff14",
+        "color_false": "#bf00ff",
+        "pad_top": 72,
+        "pad_bottom": 72
+      }
+    },
+    "fg_erploop": {
+      "type": "fg-erp-loop",
+      "settings": {
+        "tool_count": "50",
+        "total_pages": "7,237"
+      }
+    },
+    "fg_delivery": {
+      "type": "fg-delivery-timeline",
+      "settings": {}
+    },
+    "fg_repair": {
+      "type": "fg-repair-guarantee",
+      "settings": {
+        "guarantee_days": "30",
+        "support_email": "ocdtrueorfalse@gmail.com"
+      }
+    },
+    "fg_second": {
+      "type": "fg-second-tool-nudge",
+      "settings": {
+        "discount_percent": "10",
+        "unique_pages": "134",
+        "tool_count": "50"
+      }
+    },
+    "pairs_well": {
+      "type": "product-recommendations",
+      "blocks": {
+        "pw_head": {
+          "type": "text",
+          "name": "t:names.header",
+          "settings": {
+            "text": "<h2>Build a more complete support kit</h2><p>These resources pair well with what you are viewing.</p>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h4",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "static-product-card": {
+          "type": "_product-card",
+          "name": "t:names.product_card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 8,
+            "background_color": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_color": "",
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 8,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {
+            "pw_gallery": {
+              "type": "_product-card-gallery",
+              "name": "t:names.product_card_media",
+              "settings": {
+                "image_ratio": "adapt",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_color": "",
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "pw_title": {
+              "type": "product-title",
+              "name": "t:names.product_title",
+              "settings": {
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 4,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "pw_price": {
+              "type": "price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "h6",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "text_color": "",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "pw_gallery",
+            "pw_title",
+            "pw_price"
+          ]
+        }
+      },
+      "block_order": [
+        "pw_head"
+      ],
+      "name": "t:names.product_recommendations",
+      "settings": {
+        "product": "{{ closest.product }}",
+        "recommendation_type": "complementary",
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "max_products": 3,
+        "columns": 3,
+        "mobile_columns": "2",
+        "columns_gap": 12,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 28,
+        "background_color": "{{ settings.color_palette.background }}",
+        "padding-block-start": 48,
+        "padding-block-end": 24
+      }
+    },
+    "product_recommendations_qggXJq": {
+      "type": "product-recommendations",
+      "blocks": {
+        "text_cbcgyb": {
+          "type": "text",
+          "name": "t:names.header",
+          "settings": {
+            "text": "<h2>More resources you may find useful</h2>",
+            "width": "fit-content",
+            "max_width": "normal",
+            "alignment": "left",
+            "type_preset": "h4",
+            "font": "var(--font-body--family)",
+            "font_size": "1rem",
+            "line_height": "normal",
+            "letter_spacing": "normal",
+            "case": "none",
+            "wrap": "pretty",
+            "text_color": "",
+            "background": false,
+            "background_color": "#00000026",
+            "corner_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 0,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {}
+        },
+        "static-product-card": {
+          "type": "_product-card",
+          "name": "t:names.product_card",
+          "static": true,
+          "settings": {
+            "product_card_gap": 8,
+            "background_color": "",
+            "border": "none",
+            "border_width": 1,
+            "border_opacity": 100,
+            "border_color": "",
+            "border_radius": 0,
+            "padding-block-start": 0,
+            "padding-block-end": 8,
+            "padding-inline-start": 0,
+            "padding-inline-end": 0
+          },
+          "blocks": {
+            "product_card_gallery_DNizbJ": {
+              "type": "_product-card-gallery",
+              "name": "t:names.product_card_media",
+              "settings": {
+                "image_ratio": "adapt",
+                "border": "none",
+                "border_width": 1,
+                "border_opacity": 100,
+                "border_color": "",
+                "border_radius": 0,
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "product_title_M7MJkb": {
+              "type": "product-title",
+              "name": "t:names.product_title",
+              "settings": {
+                "width": "100%",
+                "max_width": "normal",
+                "alignment": "left",
+                "type_preset": "rte",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "wrap": "pretty",
+                "text_color": "",
+                "background": false,
+                "background_color": "#00000026",
+                "corner_radius": 0,
+                "padding-block-start": 4,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            },
+            "price_gLWgA6": {
+              "type": "price",
+              "settings": {
+                "show_sale_price_first": true,
+                "show_installments": false,
+                "show_tax_info": false,
+                "type_preset": "h6",
+                "width": "100%",
+                "alignment": "left",
+                "font": "var(--font-body--family)",
+                "font_size": "1rem",
+                "line_height": "normal",
+                "letter_spacing": "normal",
+                "case": "none",
+                "text_color": "",
+                "padding-block-start": 0,
+                "padding-block-end": 0,
+                "padding-inline-start": 0,
+                "padding-inline-end": 0
+              },
+              "blocks": {}
+            }
+          },
+          "block_order": [
+            "product_card_gallery_DNizbJ",
+            "product_title_M7MJkb",
+            "price_gLWgA6"
+          ]
+        }
+      },
+      "block_order": [
+        "text_cbcgyb"
+      ],
+      "name": "t:names.product_recommendations",
+      "settings": {
+        "product": "{{ closest.product }}",
+        "recommendation_type": "related",
+        "layout_type": "grid",
+        "carousel_on_mobile": false,
+        "max_products": 4,
+        "columns": 4,
+        "mobile_columns": "2",
+        "columns_gap": 12,
+        "rows_gap": 24,
+        "icons_style": "arrow",
+        "icons_shape": "none",
+        "section_width": "page-width",
+        "gap": 28,
+        "background_color": "{{ settings.color_palette.background }}",
+        "padding-block-start": 24,
+        "padding-block-end": 48
+      }
+    },
+    "fg_fit_check": {
+      "type": "fg-fit-check",
+      "settings": {
+        "kicker": "Who this is for",
+        "heading": "These three were written for people who —",
+        "lines": "have thoughts about harm that horrify you precisely because you would never want them\nreplay and review inside your own head, where there is no compulsion anyone else can see\ncarry guilt about faith, honesty, or whether you are a good person, that never quite settles\nfeel better for an hour after reassurance, then need to ask again",
+        "close": "If more than one of those is familiar, that is the loop these three were built for.",
+        "cta_label": "Start the practice — instant download"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "fg_fit_check",
+    "itb_bonus_gold",
+    "fg_voiceover",
+    "fg_answers",
+    "fg_ocd_says",
+    "product_confidence",
+    "fg_bundle",
+    "fg_sample",
+    "fg_pages",
+    "fg_printfill",
+    "fg_pocket",
+    "bonus_field_test_RN68n4",
+    "fg_erploop",
+    "fg_delivery",
+    "fg_repair",
+    "fg_second",
+    "pairs_well",
+    "product_recommendations_qggXJq"
+  ]
+}
