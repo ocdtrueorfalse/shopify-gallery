@@ -22,6 +22,10 @@
   become the LCP element, and with no script there is nothing to pause when the tab is
   hidden — the browser simply stops compositing it.
 
+  OFF BY DEFAULT. It is decoration, and the store's problem is that 99% of visitors leave
+  without adding anything to the cart. Shipping it alongside a conversion change would
+  also make that change unattributable. Turn it on deliberately, on its own.
+
   ON THE AUDIENCE. This store sells to people with OCD, intrusive thoughts and
   hypervigilance, reading long careful copy that tells them to read each page once. A
   restless background works against that, and for some people motion is a genuine
@@ -155,7 +159,7 @@
       "type": "paragraph",
       "content": "A slow moving glow behind the whole site. Pure CSS — no images, no video, no scripts, and nothing extra to download."
     },
-    { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": true },
+    { "type": "checkbox", "id": "enabled", "label": "Enabled", "default": false },
     { "type": "color", "id": "color_a", "label": "First colour", "default": "#39FF14" },
     { "type": "color", "id": "color_b", "label": "Second colour", "default": "#BF00FF" },
     { "type": "color", "id": "color_c", "label": "Third colour", "info": "Optional. Leave empty for two." },
