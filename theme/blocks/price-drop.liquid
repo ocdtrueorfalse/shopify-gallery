@@ -40,6 +40,18 @@
   the one sentence asking to be read wore it too, the page would have two greens competing
   and only one of them would do anything. The yellow is the palette's own foreground hue
   at full saturation, so it belongs to the site without ever being mistaken for a control.
+
+  THE SOLD COUNT IS A TOKEN, NOT A TYPED NUMBER. Write [sold] in the reason and the figure
+  comes from its own setting, so raising it later is editing one field rather than
+  rewriting a sentence — the same reason the overlap messages use [items] and [bundle].
+  Always follow it with a plus. A figure with a plus after it can only ever become an
+  understatement as sales accumulate; a bare figure becomes wrong the next time someone
+  buys. Round down for the same reason. This is the one number in the block that is not
+  computed, and the plus is what keeps it from going stale the way a typed price would.
+
+  AND IT FAILS CLOSED LIKE EVERYTHING ELSE. If the reason asks for [sold] and no count has
+  been set, the reason line does not render at all. A half-substituted sentence reading
+  "+ sold across Etsy and here" is worse than no sentence.
 {%- endcomment -%}
 
 {%- liquid
@@ -74,6 +86,17 @@
     assign glow = block.settings.glow_color | default: '#FFCF3D'
     assign glow_near = glow | color_modify: 'alpha', 0.32
     assign glow_far = glow | color_modify: 'alpha', 0.15
+
+    assign reason = block.settings.reason
+    assign sold = block.settings.sold_count | strip
+    assign reason_ok = true
+    if reason contains '[sold]'
+      if sold == blank
+        assign reason_ok = false
+      else
+        assign reason = reason | replace: '[sold]', sold
+      endif
+    endif
   -%}
 
   <div
@@ -88,9 +111,9 @@
       <span class="pdr__saved">You save {{ saved | money }}</span>
     </p>
 
-    {%- if block.settings.reason != blank -%}
+    {%- if reason != blank and reason_ok -%}
       <p class="pdr__reason{% if block.settings.reason_glow %} pdr__reason--glow{% endif %}">
-        {{- block.settings.reason | escape -}}
+        {{- reason | escape -}}
       </p>
     {%- endif -%}
 
@@ -170,8 +193,15 @@
       "type": "textarea",
       "id": "reason",
       "label": "Why it's this price",
-      "default": "We're new. The price is low while we find our first customers — it goes back up after that.",
-      "info": "The only line a human writes. Keep prices OUT of it — the figures above update themselves, this sentence would not. Say why it is low and that it ends."
+      "default": "[sold]+ sold across Etsy and here. The price is low while we're new — every sale takes us closer to putting it back up.",
+      "info": "The only line a human writes. Write [sold] where the number goes. Keep prices OUT of it — the figures above update themselves, this sentence would not."
+    },
+    {
+      "type": "text",
+      "id": "sold_count",
+      "label": "Copies sold so far (Etsy + Shopify)",
+      "default": "18",
+      "info": "Just the digits — the copy supplies the plus. Round DOWN. A number with a plus after it only ever becomes an understatement as sales come in, so this never needs updating on a schedule. Leave it empty and the reason line stops showing rather than printing a gap."
     },
     {
       "type": "checkbox",
