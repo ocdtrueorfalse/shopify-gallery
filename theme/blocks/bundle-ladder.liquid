@@ -204,7 +204,20 @@
     padding: 14px 14px 12px;
     transition: border-color .18s ease, transform .18s ease;
   }
-  .blb__row--featured { border-color: var(--blb-accent); border-width: 2px; padding: 13px 13px 11px; }
+  /* The hero row. A 2px border is not a hierarchy — at a glance every tile still read
+     the same weight, so the best-value option was competing with the cheap one on equal
+     terms. Tint, lift and a slightly larger CTA make the ranking visible before the copy
+     is read. Kept to compositor-friendly properties so nothing here costs a repaint. */
+  .blb__row--featured {
+    border-color: var(--blb-accent);
+    border-width: 2px;
+    padding: 15px 15px 13px;
+    background: color-mix(in srgb, var(--blb-accent) 7%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--blb-accent) 22%, transparent),
+                0 6px 22px color-mix(in srgb, var(--blb-accent) 12%, transparent);
+  }
+
+  .blb__row--featured .blb__cta { min-height: 48px; padding: 0 24px; font-size: 1rem; }
   /* The item they are already looking at is an anchor, not an offer: it recedes. */
   .blb__row--current { opacity: .72; border-style: dashed; }
 
