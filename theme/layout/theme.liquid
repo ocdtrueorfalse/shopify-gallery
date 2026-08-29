@@ -194,41 +194,17 @@
     {% render 'cart-drawer', render_wrapper: true %}
     {% render 'theme-drawer' %}
 
-    {% comment %}
-      Rendered here, outside .page-wrapper, on purpose. A position:fixed overlay
-      is trapped by any ancestor carrying transform / filter / contain, and it
-      would be clipped by .page-wrapper's own scroll container above 990px.
-      Statically rendered so its settings stay editable in the theme editor
-      while it appears on every template; it declines to render on the cart.
-    {% endcomment %}
     {%- comment -%}
-      Suppressed on the ad template. The launcher is a fixed chip anchored near the buy
-      area; on a phone it lands over the end of the subhead and next to the add-to-cart
-      button, so on paid traffic it is competing with the one control the visit is paid
-      for. Organic visitors who came to read still get it.
-    {%- endcomment -%}
-    {%- unless template.suffix == 'ad' -%}
-      {%- comment -%}
-        Hidden on phones on every template, not just the ad one. The launcher is a fixed
-        chip near the buy area; on a narrow screen it lands over the tail of the subhead
-        and beside the add-to-cart button, and three quarters of this shop's traffic is
-        mobile, so on most visits it was obscuring the thing the visit is for.
+      The True/False quiz launcher used to render here. Removed outright rather than
+      hidden: it was a fixed chip anchored near the buy area, it landed over the tail of
+      the subhead and beside the add-to-cart button on a phone, and three quarters of
+      this shop's traffic is mobile — so on most visits it sat on top of the one control
+      the visit exists for. Hiding it with a media query still shipped ~15 KB of inert
+      markup to those visitors; deleting the render costs them nothing.
 
-        Done in CSS rather than Liquid on purpose. Shopify does not expose the user agent
-        to Liquid, and branching the markup by device would make the page uncacheable at
-        the edge even if it did — a media query is the only way to get this right without
-        paying for it on every request. The trade is that the markup still downloads on
-        mobile (~15 KB, inert: the modal is only ever built from the launcher, and the
-        launcher cannot be reached). Say the word and it can be made to load on demand
-        instead, but that is a change to the section itself, not to the layout.
-      {%- endcomment -%}
-      <style>
-        @media (max-width: 749px) {
-          #shopify-section-fg-true-or-false { display: none !important; }
-        }
-      </style>
-      {% section 'fg-true-or-false' %}
-    {%- endunless -%}
+      sections/fg-true-or-false.liquid is still in the theme and its settings are still
+      in settings_data.json, so this is one line to put back. Nothing else references it.
+    {%- endcomment -%}
 
     {% comment %}
       Cart-level overlap guard. Rendered on every template because the rule it enforces
