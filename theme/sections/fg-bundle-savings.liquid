@@ -1,0 +1,752 @@
+{%- liquid
+  # -------------------------------------------------------------------------
+  # Every commercial number in this section is derived at render time. Nothing
+  # about the price story is hardcoded any more: reprice the bundle, change the
+  # compare-at, or swap the products in the `aov.contains` metafield and this
+  # block follows on its own. If you are editing this file to "fix a price",
+  # stop — fix the product instead.
+  #
+  #   parts        the real component products (product metafield aov.contains)
+  #   parts_total  true sum-of-parts, in cents
+  #   savings      the before number minus the live bundle price
+  #   per_unit     the live bundle price split across the parts
+  #   roll_from    the "before" number the price roll starts on
+  # -------------------------------------------------------------------------
+  assign parts = product.metafields.aov.contains.value
+  assign parts_count = 0
+  if parts != blank
+    assign parts_count = parts.size
+  endif
+
+  assign parts_total = 0
+  for p in parts
+    assign parts_total = parts_total | plus: p.price
+  endfor
+
+  assign bundle_price = product.price | default: 0
+  assign compare_at = product.compare_at_price | default: 0
+
+  assign per_unit = 0
+  if parts_count > 0
+    assign per_unit = bundle_price | divided_by: parts_count
+  endif
+
+  # Do the parts all share one price? Only then may the copy say "each".
+  assign uniform_parts = false
+  if parts_count > 0
+    assign uniform_parts = true
+    assign first_part_price = parts.first.price
+    for p in parts
+      unless p.price == first_part_price
+        assign uniform_parts = false
+      endunless
+    endfor
+  endif
+
+  # THE BEFORE NUMBER IS THE COMPARE-AT, NOT THE SUM OF PARTS.
+  # This used to prefer parts_total, which put two different "before" prices on
+  # one page: the header struck through the compare-at while this card rolled
+  # down from the component sum, and a shopper had no way to know which one the
+  # discount was measured against. The compare-at is the bundle's own former
+  # selling price, so it wins, and the saving is computed from it — which makes
+  # the figure here identical to the one the price-drop block prints above.
+  # parts_total still appears, on the sum line, clearly labelled "bought
+  # separately". That is a different claim about today's component prices, not a
+  # second former price, and it is allowed to differ.
+  # Falls back to the sum of parts only when there is no compare-at to use, so
+  # the card still tells a price story on a product that never had one.
+  assign roll_from = 0
+  if compare_at > bundle_price
+    assign roll_from = compare_at
+  elsif parts_count > 0 and parts_total > bundle_price
+    assign roll_from = parts_total
+  endif
+
+  # GUARD. If the maths stops making sense — the bundle repriced above its own
+  # anchor, the compare-at cleared — the savings pill and the price roll drop
+  # out rather than printing a negative saving.
+  assign savings = 0
+  assign show_savings = false
+  if roll_from > bundle_price
+    assign savings = roll_from | minus: bundle_price
+    assign show_savings = true
+  endif
+
+  assign unique_pages = section.settings.unique_pages | strip
+-%}
+{%- capture aria_maths -%}
+Bundle maths. {% if parts_count > 0 %}{{ parts_count }} workbooks{% if uniform_parts %} at {{ first_part_price | money }} each{% endif %} come to {{ parts_total | money }} bought separately. {% endif %}{% if show_savings %}This bundle normally sells for {{ roll_from | money }}. Today it is {{ bundle_price | money }}, a saving of {{ savings | money }}{% if parts_count > 0 %}, or {{ per_unit | money }} per workbook{% endif %}.{% else %}The bundle is {{ bundle_price | money }}.{% endif %}
+{%- endcapture -%}
+<style>
+.fg-motion-shell{max-width:560px;margin:28px auto;background:var(--surface,#121815);
+  border:1px solid var(--border,#26302A);border-radius:16px;padding:32px;
+  box-sizing:border-box;color:var(--fg,#F2EFE6);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,
+  "Helvetica Neue",Arial,sans-serif;font-size:15px;line-height:1.55}
+@media (max-width:640px){.fg-motion-shell{margin:20px 12px;padding:24px 16px}}
+
+.fg-motion-shell .kicker{font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted,#BFBAAE);margin:0 0 8px}
+.fg-motion-shell .tnum{font-variant-numeric:tabular-nums}
+.fg-motion-shell .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;
+  font-weight:600;padding:3px 9px;border-radius:999px;
+  border:1px solid var(--border,#26302A);color:var(--muted,#BFBAAE)}
+.fg-motion-shell .pill-neon{color:var(--neon,#39FF14);
+  border-color:color-mix(in oklab,var(--neon,#39FF14) 40%,transparent)}
+.fg-motion-shell .pill-violet{color:var(--violet,#BF00FF);
+  border-color:color-mix(in oklab,var(--violet,#BF00FF) 45%,transparent)}
+.fg-motion-shell .sheet{background:var(--paper,#FBF7EC);color:var(--paper-ink,#2A2724);
+  border-radius:6px;box-shadow:0 1px 0 rgba(0,0,0,.35),0 10px 22px -12px rgba(0,0,0,.7)}
+
+.fg-motion-shell .cta{display:inline-block;font:inherit;font-weight:650;
+  color:var(--cta-ink,#06210A);background:var(--neon,#39FF14);border:0;
+  border-radius:10px;padding:11px 20px;text-decoration:none;cursor:pointer;
+  transition:transform 240ms cubic-bezier(.22,1,.36,1),filter 240ms cubic-bezier(.22,1,.36,1)}
+.fg-motion-shell .cta:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.fg-motion-shell .cta:focus-visible{outline:2px solid var(--fg,#F2EFE6);outline-offset:2px;
+  box-shadow:0 0 0 2px color-mix(in oklab,var(--neon,#39FF14) 55%,transparent)}
+
+.fg-motion-shell .replay{appearance:none;-webkit-appearance:none;margin-top:16px;
+  font:inherit;font-size:13px;color:var(--muted,#BFBAAE);background:transparent;
+  border:1px solid var(--border,#26302A);border-radius:999px;padding:6px 14px;
+  cursor:pointer;transition:color 240ms,border-color 240ms}
+.fg-motion-shell .replay:hover{color:var(--fg,#F2EFE6);border-color:var(--neon-dim,#2BC010)}
+.fg-motion-shell .replay:focus-visible{outline:2px solid var(--neon,#39FF14);outline-offset:2px}
+html:not(.fg-js) .fg-motion-shell .replay{display:none}
+
+/* ===========================================================================
+   .fg-bundle — sum-of-parts → bundle price
+   ---------------------------------------------------------------------------
+   Every selector is scoped to .fg-bundle so several components can share a
+   page. Every token carries a literal fallback so the block survives being
+   pasted into the Horizon theme where styles.css does not exist.
+
+   STATE MODEL (this is what keeps reduced-motion and no-JS correct):
+     base            = the FINAL, RESOLVED frame. No JS, no CSS support, no
+                       observer → the whole story is already on screen.
+     .is-armed       = added by JS only when motion is allowed; it winds the
+                       component BACK to the pre-animation frame. Every hidden
+                       start frame in this file lives behind this JS-added
+                       class — never in unconditional base CSS.
+     .is-armed.is-on = plays. Every animation uses fill-mode `both`, so it
+                       holds the resolved frame and stops. Nothing loops.
+     .is-done        = added by JS the first time focus enters the component;
+                       jumps straight to the resolved frame so keyboard focus
+                       can never land on a control that is still at opacity 0.
+
+   NOTHING BELOW A BEAT MAY MOVE. The close beat is composited transforms on
+   the chips only — no animated `gap`, no layout pass, so the sum line, the
+   connector, the price card and the CTA all stay exactly where they are.
+   =========================================================================== */
+
+.fg-bundle,
+.fg-bundle *,
+.fg-bundle *::before,
+.fg-bundle *::after { box-sizing: border-box; }
+
+.fg-bundle {
+  --fgb-violet: var(--violet, #BF00FF);
+  /* Durations are owned locally, on purpose. This card carries the price for
+     cold ad traffic that bounces in seconds, so the whole run has to be over
+     inside ~1.3s and no theme-level --t-* token may stretch it. */
+  --fgb-t-base: 420ms;
+  --fgb-t-slow: 560ms;
+  position: relative;
+  font-family: var(--font, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+  color: var(--fg, #F2EFE6);
+  line-height: 1.55;
+}
+
+.fg-bundle__num { font-variant-numeric: tabular-nums; }
+
+/* --- header ------------------------------------------------------------- */
+.fg-bundle__kicker {
+  margin: 0 0 var(--space-2, 8px);
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted, #BFBAAE);
+}
+.fg-bundle__h {
+  margin: 0 0 var(--space-4, 16px);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--fg, #F2EFE6);
+}
+
+/* --- the parts ----------------------------------------------------------- */
+.fg-bundle__parts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 1px;                       /* STATIC. Never animated — see the close beat */
+}
+.fg-bundle__part { margin: 0; }
+
+.fg-bundle__chip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 var(--space-3, 12px);
+  padding: 11px 14px;
+  background: var(--surface-2, #17201C);
+  border: 1px solid var(--border, #26302A);
+  border-radius: var(--radius, 10px);
+}
+.fg-bundle__part:first-child  .fg-bundle__chip { border-radius: var(--radius, 10px) var(--radius, 10px) 3px 3px; }
+.fg-bundle__part:nth-child(2) .fg-bundle__chip { border-radius: 3px; }
+.fg-bundle__part:last-child   .fg-bundle__chip { border-radius: 3px 3px var(--radius, 10px) var(--radius, 10px); }
+
+.fg-bundle__chip-name {
+  grid-column: 1; grid-row: 1;
+  font-size: 14.5px; font-weight: 600;
+  color: var(--fg, #F2EFE6);
+}
+.fg-bundle__chip-meta {
+  grid-column: 1; grid-row: 2;
+  font-size: 12px;
+  color: var(--muted, #BFBAAE);
+}
+.fg-bundle__chip-price {
+  grid-column: 2; grid-row: 1 / span 2;
+  align-self: center;
+  font-size: 15px; font-weight: 600;
+  color: var(--fg, #F2EFE6);
+}
+
+/* --- the sum line -------------------------------------------------------- */
+.fg-bundle__sum {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 4px var(--space-4, 16px);
+  margin: var(--space-3, 12px) 0 0;
+  padding-top: var(--space-3, 12px);
+  border-top: 1px solid var(--border, #26302A);
+  font-size: 13.5px;
+  color: var(--muted, #BFBAAE);
+}
+.fg-bundle__sum-val {
+  font-size: 16px; font-weight: 650;
+  color: var(--fg, #F2EFE6);
+}
+
+/* --- merge connector (decorative) ---------------------------------------- */
+.fg-bundle__merge {
+  display: block;
+  margin: 8px auto 4px;
+  color: var(--muted, #BFBAAE);
+  opacity: .45;
+}
+.fg-bundle__draw {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 0;           /* RESOLVED: drawn */
+}
+
+/* --- the bundle price ---------------------------------------------------- */
+.fg-bundle__total {
+  background:
+    linear-gradient(180deg, var(--surface-2, #17201C), var(--surface, #121815));
+  border: 1px solid var(--border, #26302A);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-5, 24px) var(--space-4, 16px) var(--space-4, 16px);
+  text-align: center;
+}
+.fg-bundle__together {
+  margin: 0 0 2px;
+  font-size: 11px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted, #BFBAAE);
+}
+.fg-bundle__price {
+  margin: 0;
+  font-size: clamp(36px, 10vw, 50px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--fg, #F2EFE6);
+}
+/* masked two-state roll: the sum-of-parts rolls down to the live bundle price.
+   Both cells are rendered from Liquid and both use tabular figures, so the
+   digits stay on the same rhythm while the mask travels. */
+.fg-bundle__roll {
+  display: inline-block;
+  height: 1.12em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+.fg-bundle__track {
+  display: block;
+  transform: translateY(-50%);    /* RESOLVED: showing the bundle price */
+}
+.fg-bundle__cell {
+  display: block;
+  height: 1.12em;
+  line-height: 1.12em;
+}
+
+/* violet is reserved for the saved amount and nothing else */
+.fg-bundle__save {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: var(--space-3, 12px) 0 0;
+  padding: 6px 14px;
+  border: 1px solid rgba(191, 0, 255, .45);
+  background: rgba(191, 0, 255, .10);
+  border-radius: 999px;
+}
+.fg-bundle__save-label {
+  font-size: 13px; font-weight: 600;
+  color: var(--fg, #F2EFE6);
+}
+.fg-bundle__save-amt {
+  font-size: 21px; font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--fgb-violet);
+}
+.fg-bundle__each {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted, #BFBAAE);
+}
+
+/* --- act ----------------------------------------------------------------- */
+.fg-bundle__act { margin-top: var(--space-4, 16px); text-align: center; }
+
+/* Scoped copy of the shared .cta so the block still looks right when pasted
+   into Horizon without styles.css. Values match the shared sheet. */
+.fg-bundle .cta {
+  display: inline-block;
+  font: inherit;
+  font-weight: 650;
+  color: var(--cta-ink, #06210A);
+  background: var(--neon, #39FF14);
+  border: 0;
+  border-radius: var(--radius, 10px);
+  padding: 11px 20px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--t-micro, 240ms) var(--ease, cubic-bezier(.22,1,.36,1)),
+              filter var(--t-micro, 240ms) var(--ease, cubic-bezier(.22,1,.36,1));
+}
+.fg-bundle .cta:hover { filter: brightness(1.08); transform: translateY(-1px); }
+/* A real outline, not a box-shadow alone: forced-colors / Windows High Contrast
+   does not paint box-shadow, so a shadow-only ring leaves those users with no
+   focus indicator at all. The shadow stays on top as the soft glow. */
+.fg-bundle .cta:focus-visible {
+  outline: 2px solid var(--fg, #F2EFE6);
+  outline-offset: 2px;
+  box-shadow: var(--ring, 0 0 0 2px color-mix(in oklab, var(--neon, #39FF14) 55%, transparent));
+}
+
+.fg-bundle__free {
+  margin: var(--space-3, 12px) 0 0;
+  font-size: 13px;
+  color: var(--muted, #BFBAAE);
+}
+.fg-bundle__link {
+  color: var(--fg, #F2EFE6);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--border, #26302A);
+  border-radius: var(--radius-sm, 6px);
+}
+.fg-bundle__link:hover { text-decoration-color: currentColor; }
+.fg-bundle__link:focus-visible {
+  outline: 2px solid var(--neon, #39FF14);
+  outline-offset: 2px;
+  box-shadow: var(--ring, 0 0 0 2px color-mix(in oklab, var(--neon, #39FF14) 55%, transparent));
+}
+.fg-bundle__foot {
+  margin: var(--space-4, 16px) 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted, #BFBAAE);
+}
+
+/* ===========================================================================
+   ARMED — wind everything back to the pre-animation frame. Only JS adds this,
+   and only when reduced motion is NOT requested.
+   =========================================================================== */
+.fg-bundle.is-armed .fgb-r { opacity: 0; transform: translateY(10px); }
+.fg-bundle.is-armed .fgb-f { opacity: 0; }
+.fg-bundle.is-armed .fgb-s { opacity: 0; transform: scale(.96); }
+.fg-bundle.is-armed .fg-bundle__draw { stroke-dashoffset: 48; }
+.fg-bundle.is-armed .fg-bundle__track { transform: translateY(0); }
+
+/* The "open" stack. The grid gap stays at its resolved 1px forever; the 10px
+   look is faked by lifting the top two chips off the bottom one with
+   transforms. The lift is upward on purpose — the LAST chip never moves, so
+   the list's bottom edge is pinned and nothing under it (sum line, connector,
+   total card, CTA, footnote) can shift by a single pixel. Transforms are
+   composited: no layout pass, no reflow of the page around the component.
+   The offsets sit on .fg-bundle__chip, not on the .fgb-r <li>, so they never
+   fight the entrance animation's transform. */
+.fg-bundle.is-armed .fg-bundle__part .fg-bundle__chip { border-radius: var(--radius, 10px); }
+.fg-bundle.is-armed .fg-bundle__part:first-child  .fg-bundle__chip { transform: translateY(-18px); }
+.fg-bundle.is-armed .fg-bundle__part:nth-child(2) .fg-bundle__chip { transform: translateY(-9px); }
+
+/* ===========================================================================
+   PLAY — one pass, ~1.3s end to end, then it stops on the resolved frame.
+   Every delay in this file was scaled by 900/4340 from the original cut so the
+   rhythm is identical and the last beat lands at 900ms instead of 4340ms.
+   =========================================================================== */
+.fg-bundle.is-armed.is-on .fgb-r {
+  animation: fgb-rise var(--fgb-t-base) var(--ease, cubic-bezier(.22,1,.36,1)) var(--d, 0ms) both;
+}
+.fg-bundle.is-armed.is-on .fgb-f {
+  animation: fgb-fade var(--fgb-t-base) var(--ease, cubic-bezier(.22,1,.36,1)) var(--d, 0ms) both;
+}
+.fg-bundle.is-armed.is-on .fgb-s {
+  animation: fgb-scale var(--fgb-t-base) var(--ease, cubic-bezier(.22,1,.36,1)) var(--d, 0ms) both;
+}
+
+/* 350ms — the stack closes and squares off into one block. Transform +
+   border-radius only: both are composited/paint-level, so the beat costs no
+   layout and moves nothing outside the chips. */
+.fg-bundle.is-armed.is-on .fg-bundle__part:first-child .fg-bundle__chip {
+  animation: fgb-close-top var(--fgb-t-slow) var(--ease-soft, cubic-bezier(.33,0,.2,1)) 350ms both;
+}
+.fg-bundle.is-armed.is-on .fg-bundle__part:nth-child(2) .fg-bundle__chip {
+  animation: fgb-close-mid var(--fgb-t-slow) var(--ease-soft, cubic-bezier(.33,0,.2,1)) 350ms both;
+}
+.fg-bundle.is-armed.is-on .fg-bundle__part:last-child .fg-bundle__chip {
+  animation: fgb-close-bot var(--fgb-t-slow) var(--ease-soft, cubic-bezier(.33,0,.2,1)) 350ms both;
+}
+/* 390ms — the connector draws down into the bundle price */
+.fg-bundle.is-armed.is-on .fg-bundle__draw {
+  animation: fgb-draw var(--fgb-t-slow) var(--ease-soft, cubic-bezier(.33,0,.2,1)) 390ms both;
+}
+/* 540ms — the sum-of-parts rolls down to the live bundle price */
+.fg-bundle.is-armed.is-on .fg-bundle__track {
+  animation: fgb-roll var(--fgb-t-slow) var(--ease, cubic-bezier(.22,1,.36,1)) 540ms both;
+}
+
+@keyframes fgb-rise  { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
+@keyframes fgb-fade  { from { opacity: 0 } to { opacity: 1 } }
+@keyframes fgb-scale { from { opacity: 0; transform: scale(.96) } to { opacity: 1; transform: none } }
+@keyframes fgb-close-top {
+  from { transform: translateY(-18px); border-radius: var(--radius, 10px) }
+  to   { transform: none;              border-radius: var(--radius, 10px) var(--radius, 10px) 3px 3px }
+}
+@keyframes fgb-close-mid {
+  from { transform: translateY(-9px);  border-radius: var(--radius, 10px) }
+  to   { transform: none;              border-radius: 3px }
+}
+/* the bottom chip is the anchor: it only squares its corners, it never moves */
+@keyframes fgb-close-bot {
+  from { border-radius: var(--radius, 10px) }
+  to   { border-radius: 3px 3px var(--radius, 10px) var(--radius, 10px) }
+}
+@keyframes fgb-draw  { from { stroke-dashoffset: 48 } to { stroke-dashoffset: 0 } }
+@keyframes fgb-roll  { from { transform: translateY(0) } to { transform: translateY(-50%) } }
+
+/* ===========================================================================
+   FOCUS SAFETY — a control that is parked at opacity 0 must never be the thing
+   the keyboard is pointing at. The buy CTA and the free-sample link sit inside
+   .fg-bundle__act, which is invisible until 850ms, yet they are tab-focusable
+   from the first frame. Two guards, CSS first so it holds even mid-animation:
+
+     1. :focus-within on the act block resolves the act block instantly.
+     2. :focus-within on the root resolves every parked piece.
+
+   The JS then adds .is-done for the full, permanent end frame.
+   =========================================================================== */
+.fg-bundle .fg-bundle__act:focus-within,
+.fg-bundle .fg-bundle__act:focus-within .fgb-r,
+.fg-bundle .fg-bundle__act:focus-within .fgb-f,
+.fg-bundle .fg-bundle__act:focus-within .fgb-s {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+.fg-bundle:focus-within .fgb-r,
+.fg-bundle:focus-within .fgb-f,
+.fg-bundle:focus-within .fgb-s {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* ===========================================================================
+   DONE — the resolved frame, pinned. Added by JS on the first focusin; the
+   declarations are the same ones the reduced-motion branch lands on.
+   =========================================================================== */
+.fg-bundle.is-done .fgb-r,
+.fg-bundle.is-done .fgb-f,
+.fg-bundle.is-done .fgb-s {
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+.fg-bundle.is-done .fg-bundle__part:first-child .fg-bundle__chip {
+  transform: none !important;
+  border-radius: var(--radius, 10px) var(--radius, 10px) 3px 3px !important;
+  animation: none !important;
+}
+.fg-bundle.is-done .fg-bundle__part:nth-child(2) .fg-bundle__chip {
+  transform: none !important;
+  border-radius: 3px !important;
+  animation: none !important;
+}
+.fg-bundle.is-done .fg-bundle__part:last-child .fg-bundle__chip {
+  transform: none !important;
+  border-radius: 3px 3px var(--radius, 10px) var(--radius, 10px) !important;
+  animation: none !important;
+}
+.fg-bundle.is-done .fg-bundle__draw {
+  stroke-dashoffset: 0 !important;
+  animation: none !important;
+}
+.fg-bundle.is-done .fg-bundle__track {
+  transform: translateY(-50%) !important;   /* rests on the bundle price */
+  animation: none !important;
+}
+
+/* ===========================================================================
+   REDUCED MOTION — land on the final frame, with every fact readable.
+   Belt and braces: the JS also refuses to arm, so these !importants only ever
+   have to catch a preference that changed after load.
+   =========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .fg-bundle .fgb-r,
+  .fg-bundle .fgb-f,
+  .fg-bundle .fgb-s,
+  .fg-bundle.is-armed .fgb-r,
+  .fg-bundle.is-armed .fgb-f,
+  .fg-bundle.is-armed .fgb-s {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+  /* the grid gap is static 1px and never animated, so there is nothing to
+     undo on .fg-bundle__parts — only the chips' own offsets and corners */
+  .fg-bundle.is-armed .fg-bundle__part:first-child .fg-bundle__chip,
+  .fg-bundle .fg-bundle__part:first-child .fg-bundle__chip {
+    transform: none !important;
+    border-radius: var(--radius, 10px) var(--radius, 10px) 3px 3px !important;
+    animation: none !important;
+  }
+  .fg-bundle.is-armed .fg-bundle__part:nth-child(2) .fg-bundle__chip,
+  .fg-bundle .fg-bundle__part:nth-child(2) .fg-bundle__chip {
+    transform: none !important;
+    border-radius: 3px !important;
+    animation: none !important;
+  }
+  .fg-bundle.is-armed .fg-bundle__part:last-child .fg-bundle__chip,
+  .fg-bundle .fg-bundle__part:last-child .fg-bundle__chip {
+    transform: none !important;
+    border-radius: 3px 3px var(--radius, 10px) var(--radius, 10px) !important;
+    animation: none !important;
+  }
+  .fg-bundle .fg-bundle__draw,
+  .fg-bundle.is-armed .fg-bundle__draw {
+    stroke-dashoffset: 0 !important;
+    animation: none !important;
+  }
+  .fg-bundle .fg-bundle__track,
+  .fg-bundle.is-armed .fg-bundle__track {
+    transform: translateY(-50%) !important;   /* rests on the bundle price */
+    animation: none !important;
+  }
+}
+</style><div class="fg-motion-shell">
+<div class="fg-bundle" role="figure"
+       aria-label="{{ aria_maths | strip_newlines | strip | escape }}">
+
+    <p class="fg-bundle__kicker">Intrusive Thoughts Bundle</p>
+    <h2 class="fg-bundle__h">Three workbooks, one price</h2>
+
+    <ul class="fg-bundle__parts">
+      {%- if parts_count > 0 -%}
+        {%- for p in parts -%}
+          {%- assign chip_delay = forloop.index0 | times: 30 | plus: 20 -%}
+      <li class="fg-bundle__part fgb-r" style="--d: {{ chip_delay }}ms">
+        <div class="fg-bundle__chip">
+          <span class="fg-bundle__chip-name">{{ p.title }}</span>
+          <span class="fg-bundle__chip-meta">Print and fillable editions</span>
+          <span class="fg-bundle__chip-price fg-bundle__num">{{ p.price | money }}</span>
+        </div>
+      </li>
+        {%- endfor -%}
+      {%- else -%}
+        {%- comment -%}
+          No aov.contains metafield on this product: name the three workbooks
+          but show no prices, because there is nothing live to price them from.
+        {%- endcomment -%}
+      <li class="fg-bundle__part fgb-r" style="--d: 20ms">
+        <div class="fg-bundle__chip">
+          <span class="fg-bundle__chip-name">Harm OCD Workbook</span>
+          <span class="fg-bundle__chip-meta">Print and fillable editions</span>
+        </div>
+      </li>
+      <li class="fg-bundle__part fgb-r" style="--d: 50ms">
+        <div class="fg-bundle__chip">
+          <span class="fg-bundle__chip-name">Pure O &amp; Rumination Workbook</span>
+          <span class="fg-bundle__chip-meta">Print and fillable editions</span>
+        </div>
+      </li>
+      <li class="fg-bundle__part fgb-r" style="--d: 80ms">
+        <div class="fg-bundle__chip">
+          <span class="fg-bundle__chip-name">Scrupulosity OCD Workbook</span>
+          <span class="fg-bundle__chip-meta">Print and fillable editions</span>
+        </div>
+      </li>
+      {%- endif -%}
+    </ul>
+
+    {%- if parts_count > 0 %}
+    <p class="fg-bundle__sum fgb-r" style="--d: 200ms">
+      <span class="fg-bundle__sum-key">Bought separately{% if uniform_parts %}: {{ first_part_price | money }} each{% endif %}</span>
+      <span class="fg-bundle__sum-val fg-bundle__num">{{ parts_total | money }}</span>
+    </p>
+    {%- endif %}
+
+    <svg class="fg-bundle__merge" width="14" height="27" viewBox="0 0 14 27"
+         aria-hidden="true" focusable="false">
+      <path class="fg-bundle__draw" d="M7 1 V18"></path>
+      <path class="fg-bundle__draw" d="M2.5 14 L7 19.5 L11.5 14"></path>
+    </svg>
+
+    <div class="fg-bundle__total fgb-s" style="--d: 520ms">
+      <p class="fg-bundle__together fgb-f" style="--d: 700ms">{% if show_savings %}Usually {{ roll_from | money }} &middot; today{% else %}Together{% endif %}</p>
+      <p class="fg-bundle__price">
+        {%- if roll_from > bundle_price %}
+        <span class="fg-bundle__roll">
+          <span class="fg-bundle__track">
+            <span class="fg-bundle__cell fg-bundle__num" aria-hidden="true">{{ roll_from | money }}</span>
+            <span class="fg-bundle__cell fg-bundle__num">{{ bundle_price | money }}</span>
+          </span>
+        </span>
+        {%- else %}
+        <span class="fg-bundle__num">{{ bundle_price | money }}</span>
+        {%- endif %}
+      </p>
+
+      {%- if show_savings %}
+      <p class="fg-bundle__save fgb-r" style="--d: 750ms">
+        <span class="fg-bundle__save-label">You save</span>
+        <span class="fg-bundle__save-amt fg-bundle__num">{{ savings | money }}</span>
+      </p>
+      {%- endif %}
+
+      {%- if parts_count > 0 or unique_pages != blank %}
+      <p class="fg-bundle__each fgb-f" style="--d: 790ms">
+        {%- if parts_count > 0 -%}
+          {{ per_unit | money }} per workbook
+          {%- if unique_pages != blank %} &middot; {{ unique_pages }} pages of unique material{% endif -%}
+        {%- else -%}
+          {{ unique_pages }} pages of unique material
+        {%- endif -%}
+      </p>
+      {%- endif %}
+    </div>
+
+    <div class="fg-bundle__act fgb-r" style="--d: 850ms">
+      <a class="cta" href="{{ product.url }}">Get the bundle &mdash; {{ bundle_price | money }}</a>
+      <p class="fg-bundle__free">
+        <a class="fg-bundle__link" href="https://cdn.shopify.com/s/files/1/0999/1113/9603/files/intrusive-thoughts-sample.pdf?v=1786054330" target="_blank" rel="noopener">Read four real pages first (free sample)</a>
+        &middot; No email required.
+      </p>
+    </div>
+
+    <p class="fg-bundle__foot fgb-f" style="--d: 900ms">
+      Download after checkout &mdash; your files are on the confirmation page, plus a backup link by email.
+      Yours to keep and reprint, as many times as you like.
+    </p>
+  </div>
+</div>
+<script>
+(function () {
+  // Tells the shared sheet a script is alive, so its .m-* primitives may arm.
+  // Idempotent — every component's IIFE does this and the class is set once.
+  document.documentElement.classList.add('fg-js');
+
+  var reduce = window.matchMedia &&
+               window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var roots = document.querySelectorAll('.fg-bundle');
+
+  Array.prototype.forEach.call(roots, function (root) {
+    // Reduced motion: never arm. The base CSS is already the resolved frame,
+    // so every number is on screen, still and readable.
+    if (reduce) { return; }
+
+    root.classList.add('is-armed');
+
+    // Idempotent: it only adds a class, so any number of callers may race.
+    function play() { root.classList.add('is-on'); }
+
+    // Focus must never land on a control that is still parked at opacity 0.
+    // The buy CTA and the free-sample link are focusable from the first frame
+    // but invisible until 850ms, so the first time focus enters the component
+    // we pin the whole thing to its resolved end frame and stop animating.
+    function onFocusIn() {
+      root.classList.add('is-done');
+      root.removeEventListener('focusin', onFocusIn);
+    }
+    root.addEventListener('focusin', onFocusIn);
+
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function (entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) { play(); io.disconnect(); return; }
+        }
+      }, { threshold: 0.01 });
+      io.observe(root);
+    } else {
+      play();
+    }
+
+    // Backstop, viewport-checked. A price must never be stranded at opacity 0
+    // because an observer was throttled or never fired — but the rescue only
+    // applies to a card that is ON SCREEN and has not already played. An
+    // unconditional timer would burn the reveal of every section below the
+    // fold, so the shopper scrolls down to animations that already finished.
+    window.setTimeout(function () {
+      if (root.classList.contains('is-on')) { return; }
+      var r = root.getBoundingClientRect();
+      var vh = window.innerHeight || document.documentElement.clientHeight;
+      if (r.bottom > 0 && r.top < vh) { play(); }
+    }, 1200);
+  });
+})();
+
+
+(function(){
+  var c=document.querySelector('.fg-bundle .cta');if(!c)return;
+  c.addEventListener('click',function(e){
+    var f=document.querySelector('product-form, form[action*="/cart/add"]');
+    if(f){e.preventDefault();f.scrollIntoView({
+      behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',
+      block:'center'});}
+  });
+})();</script>
+{% schema %}
+{
+  "name": "Motion: Bundle maths",
+  "enabled_on": { "templates": ["product"] },
+  "settings": [
+    {
+      "type": "text",
+      "id": "unique_pages",
+      "label": "Unique pages",
+      "default": "134",
+      "info": "Page count shown after the per-workbook price, as in 134 pages of unique material. Leave blank to hide."
+    }
+  ],
+  "presets": [
+    {
+      "name": "Motion: Bundle maths"
+    }
+  ]
+}
+{% endschema %}
