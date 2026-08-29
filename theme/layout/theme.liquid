@@ -201,7 +201,15 @@
       Statically rendered so its settings stay editable in the theme editor
       while it appears on every template; it declines to render on the cart.
     {% endcomment %}
-    {% section 'fg-true-or-false' %}
+    {%- comment -%}
+      Suppressed on the ad template. The launcher is a fixed chip anchored near the buy
+      area; on a phone it lands over the end of the subhead and next to the add-to-cart
+      button, so on paid traffic it is competing with the one control the visit is paid
+      for. Organic visitors who came to read still get it.
+    {%- endcomment -%}
+    {%- unless template.suffix == 'ad' -%}
+      {% section 'fg-true-or-false' %}
+    {%- endunless -%}
 
     {% comment %}
       Cart-level overlap guard. Rendered on every template because the rule it enforces
