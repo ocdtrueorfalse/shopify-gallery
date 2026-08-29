@@ -9,15 +9,37 @@
  */
 {
   "type": "header",
-  "name": "Header (ad landing)",
+  "name": "t:names.header",
   "sections": {
-    "header_announcements_ad": {
+    "header_announcements_9jGBFp": {
       "type": "header-announcements",
       "blocks": {
+        "ann_discount": {
+          "type": "_announcement",
+          "settings": {
+            "text": "Instant download · Nothing ships",
+            "font": "var(--font-subheading--family)",
+            "font_size": "0.75rem",
+            "letter_spacing": "normal",
+            "case": "none"
+          },
+          "blocks": {}
+        },
         "ann_instant": {
           "type": "_announcement",
           "settings": {
-            "text": "Instant download · Print or fill on your phone",
+            "text": "⚡ Digital download — print at home or fill it in on your phone",
+            "font": "var(--font-subheading--family)",
+            "font_size": "0.75rem",
+            "letter_spacing": "normal",
+            "case": "none"
+          },
+          "blocks": {}
+        },
+        "ann_editions": {
+          "type": "_announcement",
+          "settings": {
+            "text": "Print + fillable editions included with every workbook",
             "font": "var(--font-subheading--family)",
             "font_size": "0.75rem",
             "letter_spacing": "normal",
@@ -27,7 +49,9 @@
         }
       },
       "block_order": [
-        "ann_instant"
+        "ann_discount",
+        "ann_instant",
+        "ann_editions"
       ],
       "name": "t:names.announcement_bar",
       "settings": {
@@ -57,7 +81,7 @@
           "type": "_header-menu",
           "static": true,
           "settings": {
-            "menu": "",
+            "menu": "main-menu",
             "type_font_primary_size": "0.875rem",
             "menu_font_style": "inverse",
             "type_font_primary_link": "body",
@@ -78,7 +102,7 @@
         "logo_position": "left",
         "menu_position": "left",
         "menu_row": "top",
-        "show_search": false,
+        "show_search": true,
         "search_position": "right",
         "search_row": "top",
         "show_country": false,
@@ -102,7 +126,7 @@
     }
   },
   "order": [
-    "header_announcements_ad",
+    "header_announcements_9jGBFp",
     "header_section"
   ]
 }

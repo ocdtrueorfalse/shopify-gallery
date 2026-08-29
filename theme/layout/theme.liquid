@@ -209,7 +209,19 @@
       </main>
 
       <footer>
-        {% sections 'footer-group' %}
+        {%- comment -%}
+          Same split as the header, for the same reason. The shared footer group carries
+          fg_cart_bubble — a floating "View cart" button in #39FF14, the exact colour of
+          the add-to-cart button. On a page whose only job is one purchase it reads as a
+          second green CTA, and on arrival it says "$0.00 · 0 items", which is an empty
+          state advertising itself. The ad footer drops it and keeps everything else,
+          policy links included.
+        {%- endcomment -%}
+        {%- if template.suffix == 'ad' -%}
+          {% sections 'footer-ad-group' %}
+        {%- else -%}
+          {% sections 'footer-group' %}
+        {%- endif -%}
       </footer>
     </div>
 
