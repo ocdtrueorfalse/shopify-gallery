@@ -208,6 +208,25 @@
       for. Organic visitors who came to read still get it.
     {%- endcomment -%}
     {%- unless template.suffix == 'ad' -%}
+      {%- comment -%}
+        Hidden on phones on every template, not just the ad one. The launcher is a fixed
+        chip near the buy area; on a narrow screen it lands over the tail of the subhead
+        and beside the add-to-cart button, and three quarters of this shop's traffic is
+        mobile, so on most visits it was obscuring the thing the visit is for.
+
+        Done in CSS rather than Liquid on purpose. Shopify does not expose the user agent
+        to Liquid, and branching the markup by device would make the page uncacheable at
+        the edge even if it did — a media query is the only way to get this right without
+        paying for it on every request. The trade is that the markup still downloads on
+        mobile (~15 KB, inert: the modal is only ever built from the launcher, and the
+        launcher cannot be reached). Say the word and it can be made to load on demand
+        instead, but that is a change to the section itself, not to the layout.
+      {%- endcomment -%}
+      <style>
+        @media (max-width: 749px) {
+          #shopify-section-fg-true-or-false { display: none !important; }
+        }
+      </style>
       {% section 'fg-true-or-false' %}
     {%- endunless -%}
 
