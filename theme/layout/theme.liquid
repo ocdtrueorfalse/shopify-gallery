@@ -65,7 +65,29 @@
 
     <div class="page-wrapper">
       <div id="header-group">
-        {% sections 'header-group' %}
+        {%- comment -%}
+          The ad template gets its own header group. Section groups are global — there is
+          no per-template variant of one — so the only way to change the first thing a
+          paid click sees is to render a different group for that template.
+
+          What it changes: the shared bar rotates three announcements and the first one
+          ends "Read 4 real pages free". That put a free, lower-commitment exit above the
+          logo, ahead of the price, on every load of a page someone was paid to land on —
+          and the sample opens a PDF in a new tab, so the buy path is gone. The ad group
+          runs one static line about format instead. The sample link still exists on the
+          page, below the buy button, where someone who scrolled to look for it will find
+          it.
+
+          No price in that line on purpose. Every price on this page is derived at render
+          time; a figure typed into the header would be the only one that could go stale,
+          and it would go stale in the most visible forty pixels on the site. The bundle
+          moved from $3.00 to $21.99 in a single afternoon, so this is not hypothetical.
+        {%- endcomment -%}
+        {%- if template.suffix == 'ad' -%}
+          {% sections 'header-ad-group' %}
+        {%- else -%}
+          {% sections 'header-group' %}
+        {%- endif -%}
       </div>
 
       <script>
